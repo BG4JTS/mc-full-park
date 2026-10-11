@@ -12,6 +12,7 @@ import ModCard from './components/ModCard';
 import DependencyGraph from './components/DependencyGraph';
 import StarMap from './components/StarMap';
 import HealthReport from './components/HealthReport';
+import FeedbackModal from './components/FeedbackModal';
 
 type Tab = 'selector' | 'resources' | 'config' | 'search' | 'graph';
 
@@ -36,6 +37,7 @@ export default function App() {
   const [modrinthResults, setModrinthResults] = useState<ModrinthProject[]>([]);
   const [modrinthQuery, setModrinthQuery] = useState('');
   const [searching, setSearching] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [mcVersion, setMcVersion] = useState(SITE_CONFIG.defaultMcVersion);
   const [loader, setLoader] = useState(SITE_CONFIG.defaultLoader);
   const [filterVersion, setFilterVersion] = useState(false);
@@ -329,18 +331,6 @@ export default function App() {
               <button onClick={exportCurseForge} className="px-2.5 py-1.5 rounded-md text-xs font-medium text-orange-300 bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/20 transition-all">CF</button>
               <button onClick={exportToml} className="px-2.5 py-1.5 rounded-md text-xs font-medium text-indigo-300 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/20 transition-all">TOML</button>
             </div>
-            <div className="w-px h-5 bg-mc-border mx-1" />
-            <a
-              href={`https://github.com/${SITE_CONFIG.repo}/issues/new?labels=${SITE_CONFIG.issueLabels.join(',')}`}
-              target="_blank" rel="noopener noreferrer"
-              className="px-2.5 py-1.5 rounded-md text-xs text-zinc-500 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1.5"
-              title={UI.feedbackHint}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-              </svg>
-              {UI.feedback}
-            </a>
           </div>
         </div>
       </header>
@@ -666,6 +656,27 @@ export default function App() {
           </div>
         )}
       </div>
+
+      <button
+        onClick={() => setShowFeedback(true)}
+        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-mc-green text-mc-dark shadow-lg shadow-mc-green/20 hover:shadow-mc-green/40 hover:scale-105 transition-all flex items-center justify-center group"
+        title={UI.feedback}
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+        </svg>
+        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+      </button>
+
+      {showFeedback && (
+        <FeedbackModal
+          mods={mods}
+          selectedIds={selectedIds}
+          mcVersion={mcVersion}
+          loader={loader}
+          onClose={() => setShowFeedback(false)}
+        />
+      )}
     </div>
   );
 }
