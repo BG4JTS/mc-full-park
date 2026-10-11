@@ -1,0 +1,23 @@
+# Rope Configuration for MC Full Park Modpack
+# Minecraft Version: 1.21.x
+
+[metadata]
+name = "MC Full Park"
+package-version = "1.0.0"
+loaders = ["fabric"]
+minecraft-version = "1.21"
+game-versions = ["1.21", ">=1.21"]
+overview = """
+自动化生电建筑整合包，包含最新 Fabric 生态的优质 mod。
+支持多种生电组件：传送带、漏斗、红石自动化、存储系统、
+物流网络等，让你打造完美的高效农场和工厂。
+"""
+
+[release]
+changelog-file = "CHANGELOG.md"
+modrinth-id = "cG4k3W8Y"  # TODO: 替换为你的 Modrinth Mod ID
+github-release = true
+
+[npm-dependencies]
+# 如果有 Node.js 依赖可以在此列出
+# "some-package": "^1.0.0"
