@@ -1925,68 +1925,9 @@ export const PACK_MODS: McParkMod[] = [
       "server": "required"
     }
   },
-  {
-    "id": "copper-hopper",
-    "name": "Copper Hopper",
-    "version": "latest",
-    "required": false,
-    "category": "redstone",
-    "description": "Hopper that acts as a simple item filter",
-    "source": "modrinth",
-    "projectId": "lYpHN5hB",
-    "dependencies": [
-      "fabric-api"
-    ],
-    "env": {
-      "client": "required",
-      "server": "required"
-    }
-  },
-  {
-    "id": "tc-wireless-redstone",
-    "name": "TC Wireless Redstone",
-    "version": "latest",
-    "required": false,
-    "category": "redstone",
-    "description": "Transmit redstone signals wirelessly between transmitter and receiver",
-    "source": "modrinth",
-    "projectId": "uMmeOjBd",
-    "dependencies": [],
-    "env": {
-      "client": "required",
-      "server": "required"
-    }
-  },
-  {
-    "id": "antishadowpatch",
-    "name": "AntiShadowPatch",
-    "version": "latest",
-    "required": false,
-    "category": "redstone",
-    "description": "Brings back technical bugs/mechanics Mojang patched (duplication etc.)",
-    "source": "modrinth",
-    "projectId": "Gz2EBJmV",
-    "dependencies": [],
-    "env": {
-      "client": "required",
-      "server": "required"
-    }
-  },
-  {
-    "id": "omnihopper",
-    "name": "Omni-Hopper",
-    "version": "latest",
-    "required": false,
-    "category": "redstone",
-    "description": "Break free from normal hopper constraints; true item transport freedom",
-    "source": "modrinth",
-    "projectId": "yWp3YZnJ",
-    "dependencies": [],
-    "env": {
-      "client": "required",
-      "server": "required"
-    }
-  },
+
+
+
   {
     "id": "force-close-world-loading-screen",
     "name": "Force Close World Loading Screen",
