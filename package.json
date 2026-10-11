@@ -11,7 +11,8 @@
     "check": "tsc --noEmit",
     "modrinth:push": "node scripts/modrinth-push.js",
     "pack:build": "node scripts/build-pack.js",
-    "mcpark": "node scripts/mcpark-editor.js"
+    "mcpark": "node scripts/mcpark-editor.js",
+    "setup": "node scripts/setup-fork.cjs"
   },
   "keywords": [
     "minecraft",

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MC Full Park</title>
+  <script>
+    // GitHub Pages SPA redirect
+    var pathSegments = window.location.pathname.split('/').filter(Boolean);
+    var repo = pathSegments[0];
+    var rest = pathSegments.slice(1).join('/');
+    var base = '/' + repo + '/';
+    sessionStorage.setItem('redirect', window.location.href);
+    window.location.replace(base + (rest ? '#' + rest : ''));
+  </script>
+</head>
+<body></body>
+</html>

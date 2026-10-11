@@ -16,13 +16,27 @@
 
 ## Fork 指南（整合包作者）
 
-### 1. Fork 本仓库
+### 快速开始（推荐）
 
-点击 GitHub 右上角 **Fork** 按钮。
+```bash
+# 1. Fork 本仓库后 clone 到本地
+git clone https://github.com/你的用户名/你的仓库名.git
+cd 你的仓库名
 
-### 2. 修改站点配置
+# 2. 安装依赖
+npm install
 
-编辑 `src/site-config.ts`：
+# 3. 运行初始化向导（自动配置站点信息）
+npm run setup
+
+# 4. 编辑 src/data/mods.ts，替换为你的 mod 列表
+# 5. 启动开发服务器
+npm run dev
+```
+
+### 手动配置
+
+如需手动修改，编辑 `src/site-config.ts`：
 
 ```typescript
 export const SITE_CONFIG = {
@@ -38,7 +52,7 @@ export const SITE_CONFIG = {
 };
 ```
 
-### 3. 替换 Mod 列表
+### 替换 Mod 列表
 
 编辑 `src/data/mods.ts`，按格式填入你的 mod 列表：
 
@@ -59,15 +73,23 @@ export const SITE_CONFIG = {
 
 **可用分类**: `library` / `redstone` / `performance` / `automation` / `storage` / `building` / `ui` / `visual` / `network` / `world` / `resourcepack` / `shaderpack` / `other`
 
-### 4. 部署
+### 部署到 GitHub Pages
 
-```bash
-npm install
-npm run dev      # 本地开发
-npm run build    # 构建产物在 dist/
-```
+1. 推送代码到 `main` 分支
+2. 进入仓库 **Settings → Pages → Source**，选择 **GitHub Actions**
+3. 之后每次推送 `main` 会自动构建部署
+4. 访问 `https://你的用户名.github.io/你的仓库名/`
 
-可部署到 GitHub Pages / Vercel / Netlify 等平台。
+也可部署到 Vercel / Netlify / Cloudflare Pages 等平台。
+
+### Fork 自定义清单
+
+- [ ] 运行 `npm run setup` 或手动修改 `site-config.ts`
+- [ ] 替换 `src/data/mods.ts` 为你的 mod 列表
+- [ ] 修改 `index.html` 标题
+- [ ] 修改 `tailwind.config.js` 主题色（可选）
+- [ ] 启用 GitHub Pages 或部署到其他平台
+- [ ] 在仓库 Settings → Issues → Labels 创建 `mod-conflict` / `bug` / `suggestion` 标签
 
 ## 玩家使用
 
