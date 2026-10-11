@@ -33,11 +33,11 @@ export default function App() {
   const [modrinthResults, setModrinthResults] = useState<ModrinthProject[]>([]);
   const [modrinthQuery, setModrinthQuery] = useState('');
   const [searching, setSearching] = useState(false);
+  const [mcVersion, setMcVersion] = useState('26.1.2');
+  const [loader, setLoader] = useState('fabric');
+  const [filterVersion, setFilterVersion] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
-
-  const mcVersion = config.minecraft.version[0] || '26.1.2';
-  const loader = config.minecraft.mod_loader[0] || 'fabric';
 
   const categories = getCategories(mods);
   const filtered = filterMods(mods, search, category);
@@ -49,13 +49,13 @@ export default function App() {
       if (!modrinthQuery.trim()) { setModrinthResults([]); return; }
       setSearching(true);
       try {
-        const results = await searchMods(modrinthQuery, mcVersion, loader);
+        const results = await searchMods(modrinthQuery, filterVersion ? mcVersion : undefined, loader);
         setModrinthResults(results);
       } catch { /* ignore */ }
       setSearching(false);
     }, 400);
     return () => clearTimeout(timer);
-  }, [modrinthQuery, mcVersion, loader]);
+  }, [modrinthQuery, mcVersion, loader, filterVersion]);
 
   const toggleMod = useCallback((id: string) => {
     setSelectedIds(prev => {
@@ -284,11 +284,29 @@ export default function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
             </div>
-            <div>
-              <h1 className="text-sm font-semibold text-white tracking-tight">{UI.appTitle}</h1>
-              <p className="text-[11px] text-zinc-500">
-                {mcVersion} · {loader}
-              </p>
+            <div className="flex items-center gap-2">
+              <div>
+                <h1 className="text-sm font-semibold text-white tracking-tight">{UI.appTitle}</h1>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <input
+                    type="text"
+                    value={mcVersion}
+                    onChange={e => setMcVersion(e.target.value)}
+                    className="w-16 bg-transparent border-b border-zinc-700 text-[11px] text-zinc-400 focus:outline-none focus:border-mc-green/50 transition-colors"
+                  />
+                  <span className="text-[11px] text-zinc-600">·</span>
+                  <select
+                    value={loader}
+                    onChange={e => setLoader(e.target.value)}
+                    className="bg-transparent text-[11px] text-zinc-400 focus:outline-none cursor-pointer appearance-none"
+                  >
+                    <option value="fabric">fabric</option>
+                    <option value="quilt">quilt</option>
+                    <option value="forge">forge</option>
+                    <option value="neoforge">neoforge</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -526,9 +544,20 @@ export default function App() {
                   className="w-full bg-mc-card border border-mc-border rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-mc-green/40 focus:ring-1 focus:ring-mc-green/10 transition-all"
                 />
               </div>
-              <p className="text-xs text-zinc-600 mt-2">
-                {UI.searchingFor.replace('{version}', mcVersion).replace('{loader}', loader)}
-              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <p className="text-xs text-zinc-600">
+                  {UI.searchingFor.replace('{version}', mcVersion).replace('{loader}', loader)}
+                </p>
+                <label className="flex items-center gap-1.5 text-xs text-zinc-500 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={filterVersion}
+                    onChange={e => setFilterVersion(e.target.checked)}
+                    className="w-3 h-3 rounded border-zinc-600 bg-transparent accent-mc-green"
+                  />
+                  限定版本
+                </label>
+              </div>
             </div>
             {searching && (
               <div className="flex items-center gap-2 text-zinc-500 text-sm py-4">

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import type { McParkMod } from '../utils/mcpark-parser';
 import { UI } from '../i18n';
 
@@ -9,7 +9,7 @@ interface StarMapProps {
   selectedModId: string | null;
 }
 
-interface Node {
+interface SimNode {
   id: string;
   x: number;
   y: number;
@@ -17,6 +17,7 @@ interface Node {
   vy: number;
   mod: McParkMod;
   degree: number;
+  pinned: boolean;
 }
 
 const CAT_COLOR: Record<string, [number, number, number]> = {
@@ -30,279 +31,321 @@ const CAT_COLOR: Record<string, [number, number, number]> = {
 export default function StarMap({ mods, resolvedIds, onSelectMod, selectedModId }: StarMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [hovered, setHovered] = useState<string | null>(null);
-  const nodesRef = useRef<Map<string, Node>>(new Map());
-  const animRef = useRef<number>(0);
+  const nodesRef = useRef<SimNode[]>([]);
+  const edgesRef = useRef<[number, number][]>([]);
+  const animRef = useRef(0);
   const transformRef = useRef({ x: 0, y: 0, scale: 1 });
-  const dragRef = useRef<{ node: Node | null; startX: number; startY: number; isPanning: boolean }>({
-    node: null, startX: 0, startY: 0, isPanning: false,
+  const dragRef = useRef<{ nodeIdx: number; isPanning: boolean; lastX: number; lastY: number }>({
+    nodeIdx: -1, isPanning: false, lastX: 0, lastY: 0,
   });
+  const sizeRef = useRef({ w: 800, h: 600 });
+  const hoveredRef = useRef<string | null>(null);
+  const selectedRef = useRef<string | null>(null);
+  const resolvedRef = useRef(resolvedIds);
+  const [, forceRender] = useState(0);
+
+  hoveredRef.current = selectedModId;
+  resolvedRef.current = resolvedIds;
+  selectedRef.current = selectedModId;
+
+  const initGraph = useCallback(() => {
+    const { w, h } = sizeRef.current;
+    const degreeMap = new Map<string, number>();
+    mods.forEach(m => degreeMap.set(m.id, 0));
+    for (const mod of mods) {
+      for (const dep of mod.dependencies) {
+        degreeMap.set(mod.id, (degreeMap.get(mod.id) || 0) + 1);
+        if (degreeMap.has(dep)) degreeMap.set(dep, degreeMap.get(dep)! + 1);
+      }
+    }
+
+    const idToIdx = new Map<string, number>();
+    const nodes: SimNode[] = mods.map((mod, i) => {
+      idToIdx.set(mod.id, i);
+      const angle = (i / mods.length) * Math.PI * 2;
+      const r = Math.min(w, h) * 0.25;
+      return {
+        id: mod.id,
+        x: w / 2 + Math.cos(angle) * r + (Math.random() - 0.5) * 40,
+        y: h / 2 + Math.sin(angle) * r + (Math.random() - 0.5) * 40,
+        vx: 0, vy: 0,
+        mod,
+        degree: degreeMap.get(mod.id) || 0,
+        pinned: false,
+      };
+    });
+
+    const edges: [number, number][] = [];
+    for (const mod of mods) {
+      const srcIdx = idToIdx.get(mod.id);
+      if (srcIdx === undefined) continue;
+      for (const dep of mod.dependencies) {
+        const tgtIdx = idToIdx.get(dep);
+        if (tgtIdx !== undefined) edges.push([srcIdx, tgtIdx]);
+      }
+    }
+
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+  }, [mods]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const rect = container.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
+
+    const resize = () => {
+      const rect = container.getBoundingClientRect();
+      sizeRef.current = { w: rect.width, h: rect.height };
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+    };
+    resize();
+
+    if (nodesRef.current.length === 0) initGraph();
 
     const ctx = canvas.getContext('2d')!;
-    ctx.scale(dpr, dpr);
 
-    const w = rect.width;
-    const h = rect.height;
-
-    const degreeMap = new Map<string, number>();
-    for (const mod of mods) {
-      if (!degreeMap.has(mod.id)) degreeMap.set(mod.id, 0);
-      for (const dep of mod.dependencies) {
-        degreeMap.set(dep, (degreeMap.get(dep) || 0) + 1);
-        degreeMap.set(mod.id, (degreeMap.get(mod.id) || 0) + 1);
-      }
+    const stars: [number, number, number][] = [];
+    for (let i = 0; i < 150; i++) {
+      stars.push([Math.random() * sizeRef.current.w, Math.random() * sizeRef.current.h, Math.random() * 0.4 + 0.05]);
     }
 
-    const nodes = new Map<string, Node>();
-    const existing = nodesRef.current;
-    mods.forEach((mod, i) => {
-      const angle = (i / mods.length) * Math.PI * 2;
-      const r = Math.min(w, h) * 0.3;
-      const ex = existing.get(mod.id);
-      nodes.set(mod.id, {
-        id: mod.id,
-        x: ex ? ex.x : w / 2 + Math.cos(angle) * r + (Math.random() - 0.5) * 50,
-        y: ex ? ex.y : h / 2 + Math.sin(angle) * r + (Math.random() - 0.5) * 50,
-        vx: ex ? ex.vx : 0,
-        vy: ex ? ex.vy : 0,
-        mod,
-        degree: degreeMap.get(mod.id) || 0,
-      });
-    });
-    nodesRef.current = nodes;
+    let alpha = 1;
 
-    const edges: [string, string][] = [];
-    for (const mod of mods) {
-      for (const dep of mod.dependencies) {
-        if (nodes.has(dep)) edges.push([mod.id, dep]);
-      }
-    }
+    const simulate = () => {
+      const nodes = nodesRef.current;
+      const edges = edgesRef.current;
+      const { w, h } = sizeRef.current;
+      if (nodes.length === 0) return;
 
-    let frame = 0;
-    const maxFrames = 300;
+      alpha = Math.max(0.005, alpha * 0.998);
 
-    function simulate() {
-      if (frame > maxFrames) return;
-      const alpha = Math.max(0.001, 1 - frame / maxFrames);
-      const nodeArr = Array.from(nodes.values());
-
-      for (let i = 0; i < nodeArr.length; i++) {
-        for (let j = i + 1; j < nodeArr.length; j++) {
-          const a = nodeArr[i], b = nodeArr[j];
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
           let dx = b.x - a.x, dy = b.y - a.y;
-          let dist = Math.sqrt(dx * dx + dy * dy) || 1;
-          const force = -80 * alpha / (dist * dist);
+          let dist2 = dx * dx + dy * dy;
+          if (dist2 < 1) dist2 = 1;
+          const dist = Math.sqrt(dist2);
+          const force = (-25 * alpha) / dist2;
           const fx = (dx / dist) * force;
           const fy = (dy / dist) * force;
-          a.vx -= fx; a.vy -= fy;
-          b.vx += fx; b.vy += fy;
+          if (!a.pinned) { a.vx -= fx; a.vy -= fy; }
+          if (!b.pinned) { b.vx += fx; b.vy += fy; }
         }
       }
 
-      for (const [srcId, tgtId] of edges) {
-        const src = nodes.get(srcId)!;
-        const tgt = nodes.get(tgtId)!;
-        let dx = tgt.x - src.x, dy = tgt.y - src.y;
-        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const force = (dist - 100) * 0.005 * alpha;
+      for (const [si, ti] of edges) {
+        const s = nodes[si], t = nodes[ti];
+        if (!s || !t) continue;
+        const dx = t.x - s.x, dy = t.y - s.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const force = (dist - 80) * 0.004 * alpha;
         const fx = (dx / dist) * force;
         const fy = (dy / dist) * force;
-        src.vx += fx; src.vy += fy;
-        tgt.vx -= fx; tgt.vy -= fy;
+        if (!s.pinned) { s.vx += fx; s.vy += fy; }
+        if (!t.pinned) { t.vx -= fx; t.vy -= fy; }
       }
 
-      for (const n of nodeArr) {
-        n.vx += (w / 2 - n.x) * 0.001 * alpha;
-        n.vy += (h / 2 - n.y) * 0.001 * alpha;
-        n.vx *= 0.85; n.vy *= 0.85;
-        n.x += n.vx; n.y += n.vy;
-        n.x = Math.max(20, Math.min(w - 20, n.x));
-        n.y = Math.max(20, Math.min(h - 20, n.y));
+      for (const n of nodes) {
+        if (n.pinned) continue;
+        n.vx += (w / 2 - n.x) * 0.0005 * alpha;
+        n.vy += (h / 2 - n.y) * 0.0005 * alpha;
+        n.vx *= 0.55;
+        n.vy *= 0.55;
+        const speed = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+        if (speed > 8) { n.vx = (n.vx / speed) * 8; n.vy = (n.vy / speed) * 8; }
+        n.x += n.vx;
+        n.y += n.vy;
+        n.x = Math.max(15, Math.min(w - 15, n.x));
+        n.y = Math.max(15, Math.min(h - 15, n.y));
       }
+    };
 
-      frame++;
-    }
-
-    const stars: [number, number, number][] = [];
-    for (let i = 0; i < 200; i++) {
-      stars.push([Math.random() * w, Math.random() * h, Math.random() * 0.5 + 0.1]);
-    }
-
-    function draw() {
+    const draw = () => {
       simulate();
+      const { w, h } = sizeRef.current;
       const t = transformRef.current;
-      ctx.save();
-      ctx.clearRect(0, 0, w, h);
+      const nodes = nodesRef.current;
+      const edges = edgesRef.current;
+      const hov = hoveredRef.current;
+      const sel = selectedRef.current;
+      const res = resolvedRef.current;
 
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = '#09090b';
       ctx.fillRect(0, 0, w, h);
 
       for (const [sx, sy, sb] of stars) {
-        ctx.fillStyle = `rgba(255,255,255,${sb * 0.3})`;
+        ctx.fillStyle = `rgba(255,255,255,${sb})`;
         ctx.fillRect(sx, sy, 1, 1);
       }
 
+      ctx.save();
       ctx.translate(t.x, t.y);
       ctx.scale(t.scale, t.scale);
 
-      for (const [srcId, tgtId] of edges) {
-        const src = nodes.get(srcId);
-        const tgt = nodes.get(tgtId);
-        if (!src || !tgt) continue;
-        const isHighlight = hovered === srcId || hovered === tgtId || selectedModId === srcId || selectedModId === tgtId;
+      for (const [si, ti] of edges) {
+        const s = nodes[si], nd = nodes[ti];
+        if (!s || !nd) continue;
+        const isHl = hov === s.id || hov === nd.id || sel === s.id || sel === nd.id;
         ctx.beginPath();
-        ctx.moveTo(src.x, src.y);
-        ctx.lineTo(tgt.x, tgt.y);
-        ctx.strokeStyle = isHighlight ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.04)';
-        ctx.lineWidth = isHighlight ? 1.5 : 0.5;
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(nd.x, nd.y);
+        if (isHl) {
+          ctx.strokeStyle = 'rgba(16,185,129,0.35)';
+          ctx.lineWidth = 1.5;
+        } else {
+          ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+          ctx.lineWidth = 0.5;
+        }
         ctx.stroke();
       }
 
-      for (const [, node] of nodes) {
+      for (const node of nodes) {
         const rgb = CAT_COLOR[node.mod.category] || CAT_COLOR.other;
-        const isResolved = resolvedIds.has(node.id);
-        const isHovered = hovered === node.id;
-        const isSelected = selectedModId === node.id;
-        const r = Math.max(3, Math.min(12, 3 + node.degree * 1.5));
+        const isRes = res.has(node.id);
+        const isHov = hov === node.id;
+        const isSel = sel === node.id;
+        const r = Math.max(3, Math.min(10, 3 + node.degree * 1.2));
 
-        if (isHovered || isSelected) {
-          const grad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r * 4);
-          grad.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.3)`);
+        if (isHov || isSel) {
+          const grad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r * 3.5);
+          grad.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.25)`);
           grad.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`);
           ctx.fillStyle = grad;
           ctx.beginPath();
-          ctx.arc(node.x, node.y, r * 4, 0, Math.PI * 2);
+          ctx.arc(node.x, node.y, r * 3.5, 0, Math.PI * 2);
           ctx.fill();
         }
 
         ctx.beginPath();
         ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
-        const alpha = isResolved ? 1 : 0.3;
-        ctx.fillStyle = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
+        ctx.fillStyle = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${isRes ? 0.9 : 0.25})`;
         ctx.fill();
 
-        if (isSelected) {
-          ctx.strokeStyle = '#fff';
-          ctx.lineWidth = 2;
+        if (isSel) {
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5;
           ctx.stroke();
         }
 
-        if (isHovered) {
-          ctx.fillStyle = '#fff';
-          ctx.font = '11px Inter, sans-serif';
+        if (isHov || isSel || node.degree >= 4) {
+          ctx.fillStyle = isHov ? '#ffffff' : 'rgba(255,255,255,0.6)';
+          ctx.font = '10px Inter, system-ui, sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(node.mod.name, node.x, node.y - r - 6);
+          ctx.textBaseline = 'top';
+          ctx.fillText(node.mod.name, node.x, node.y + r + 3);
         }
       }
 
       ctx.restore();
       animRef.current = requestAnimationFrame(draw);
-    }
+    };
 
     animRef.current = requestAnimationFrame(draw);
-
-    const handleResize = () => {
-      const r2 = container.getBoundingClientRect();
-      canvas.width = r2.width * dpr;
-      canvas.height = r2.height * dpr;
-      canvas.style.width = r2.width + 'px';
-      canvas.style.height = r2.height + 'px';
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(dpr, dpr);
-    };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', resize);
 
     return () => {
       cancelAnimationFrame(animRef.current);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', resize);
     };
-  }, [mods, resolvedIds, hovered, selectedModId]);
+  }, [initGraph]);
 
-  const getNodeAt = (mx: number, my: number): Node | null => {
+  const getNodeAt = useCallback((mx: number, my: number): number => {
     const t = transformRef.current;
     const x = (mx - t.x) / t.scale;
     const y = (my - t.y) / t.scale;
-    for (const [, node] of nodesRef.current) {
-      const r = Math.max(3, Math.min(12, 3 + node.degree * 1.5));
-      const dx = node.x - x, dy = node.y - y;
-      if (dx * dx + dy * dy < (r + 4) * (r + 4)) return node;
+    const nodes = nodesRef.current;
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const n = nodes[i];
+      const r = Math.max(3, Math.min(10, 3 + n.degree * 1.2)) + 4;
+      const dx = n.x - x, dy = n.y - y;
+      if (dx * dx + dy * dy < r * r) return i;
     }
-    return null;
-  };
+    return -1;
+  }, []);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
-    const node = getNodeAt(mx, my);
-    setHovered(node ? node.id : null);
+    const d = dragRef.current;
 
-    if (dragRef.current.node) {
+    if (d.nodeIdx >= 0 && nodesRef.current[d.nodeIdx]) {
       const t = transformRef.current;
-      const x = (mx - t.x) / t.scale;
-      const y = (my - t.y) / t.scale;
-      dragRef.current.node.x = x;
-      dragRef.current.node.y = y;
-      dragRef.current.node.vx = 0;
-      dragRef.current.node.vy = 0;
-    } else if (dragRef.current.isPanning) {
-      const dx = e.clientX - dragRef.current.startX;
-      const dy = e.clientY - dragRef.current.startY;
+      const node = nodesRef.current[d.nodeIdx];
+      node.x = (mx - t.x) / t.scale;
+      node.y = (my - t.y) / t.scale;
+      node.vx = 0;
+      node.vy = 0;
+      alpha = Math.max(alpha, 0.1);
+    } else if (d.isPanning) {
+      const dx = e.clientX - d.lastX;
+      const dy = e.clientY - d.lastY;
       transformRef.current.x += dx;
       transformRef.current.y += dy;
-      dragRef.current.startX = e.clientX;
-      dragRef.current.startY = e.clientY;
-    }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const node = getNodeAt(mx, my);
-    if (node) {
-      dragRef.current = { node, startX: mx, startY: my, isPanning: false };
+      d.lastX = e.clientX;
+      d.lastY = e.clientY;
     } else {
-      dragRef.current = { node: null, startX: e.clientX, startY: e.clientY, isPanning: true };
+      const idx = getNodeAt(mx, my);
+      const newHov = idx >= 0 ? nodesRef.current[idx].id : null;
+      if (newHov !== hoveredRef.current) {
+        hoveredRef.current = newHov;
+        forceRender(n => n + 1);
+      }
     }
-  };
+  }, [getNodeAt]);
 
-  const handleMouseUp = () => {
-    dragRef.current = { node: null, startX: 0, startY: 0, isPanning: false };
-  };
+  let alpha = 1;
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
-    const node = getNodeAt(mx, my);
-    onSelectMod(node ? node.id : null);
-  };
+    const idx = getNodeAt(mx, my);
+    if (idx >= 0) {
+      nodesRef.current[idx].pinned = true;
+      dragRef.current = { nodeIdx: idx, isPanning: false, lastX: e.clientX, lastY: e.clientY };
+    } else {
+      dragRef.current = { nodeIdx: -1, isPanning: true, lastX: e.clientX, lastY: e.clientY };
+    }
+  }, [getNodeAt]);
 
-  const handleWheel = (e: React.WheelEvent) => {
+  const handleMouseUp = useCallback(() => {
+    const d = dragRef.current;
+    if (d.nodeIdx >= 0 && nodesRef.current[d.nodeIdx]) {
+      nodesRef.current[d.nodeIdx].pinned = false;
+    }
+    dragRef.current = { nodeIdx: -1, isPanning: false, lastX: 0, lastY: 0 };
+  }, []);
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const idx = getNodeAt(mx, my);
+    onSelectMod(idx >= 0 ? nodesRef.current[idx].id : null);
+  }, [getNodeAt, onSelectMod]);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     const rect = canvasRef.current!.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     const t = transformRef.current;
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.max(0.3, Math.min(3, t.scale * delta));
+    const factor = e.deltaY > 0 ? 0.92 : 1.08;
+    const newScale = Math.max(0.2, Math.min(4, t.scale * factor));
     t.x = mx - (mx - t.x) * (newScale / t.scale);
     t.y = my - (my - t.y) * (newScale / t.scale);
     t.scale = newScale;
-  };
+  }, []);
 
   return (
     <div className="relative w-full h-full min-h-[500px]">
@@ -313,12 +356,12 @@ export default function StarMap({ mods, resolvedIds, onSelectMod, selectedModId 
           onMouseMove={handleMouseMove}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
-          onMouseLeave={() => { handleMouseUp(); setHovered(null); }}
+          onMouseLeave={() => { handleMouseUp(); hoveredRef.current = null; }}
           onClick={handleClick}
           onWheel={handleWheel}
         />
       </div>
-      <div className="absolute bottom-3 left-3 text-[10px] text-zinc-600 pointer-events-none">
+      <div className="absolute bottom-3 left-3 text-[10px] text-zinc-600 pointer-events-none select-none">
         {UI.starMapHint}
       </div>
     </div>

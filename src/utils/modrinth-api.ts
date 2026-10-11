@@ -20,13 +20,10 @@ export interface ModrinthVersion {
   dependencies: { project_id: string; dependency_type: string }[];
 }
 
-export async function searchMods(query: string, mcVersion: string, loader: string): Promise<ModrinthProject[]> {
-  const params = new URLSearchParams({
-    query,
-    limit: '20',
-    game_versions: `["${mcVersion}"]`,
-    loaders: `["${loader}"]`,
-  });
+export async function searchMods(query: string, mcVersion?: string, loader?: string): Promise<ModrinthProject[]> {
+  const params = new URLSearchParams({ query, limit: '20' });
+  if (mcVersion) params.set('game_versions', `["${mcVersion}"]`);
+  if (loader) params.set('loaders', `["${loader}"]`);
   const res = await fetch(`${MODRINTH_API}/search?${params}`);
   if (!res.ok) throw new Error(`Modrinth search failed: ${res.status}`);
   const data = await res.json();
