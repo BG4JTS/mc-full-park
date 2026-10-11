@@ -9,6 +9,7 @@ import { PACK_MODS } from './data/mods';
 import { CATEGORY_LABELS, TAB_LABELS, UI } from './i18n';
 import ModCard from './components/ModCard';
 import DependencyGraph from './components/DependencyGraph';
+import StarMap from './components/StarMap';
 
 type Tab = 'selector' | 'config' | 'search' | 'graph';
 
@@ -62,6 +63,24 @@ export default function App() {
       const mod = mods.find(m => m.id === id);
       if (mod?.required) return prev;
       if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, [mods]);
+
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(mods.map(m => m.id)));
+  }, [mods]);
+
+  const deselectAll = useCallback(() => {
+    setSelectedIds(new Set(mods.filter(m => m.required).map(m => m.id)));
+  }, [mods]);
+
+  const invertSelection = useCallback(() => {
+    setSelectedIds(prev => {
+      const next = new Set<string>();
+      for (const m of mods) {
+        if (m.required || !prev.has(m.id)) next.add(m.id);
+      }
       return next;
     });
   }, [mods]);
@@ -326,9 +345,9 @@ export default function App() {
         </nav>
 
         {tab === 'selector' && (
-          <div className="flex gap-8">
+          <div className="flex gap-6">
             <div className="flex-1 min-w-0">
-              <div className="flex gap-3 mb-6">
+              <div className="flex gap-3 mb-3">
                 <div className="relative flex-1">
                   <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -338,13 +357,13 @@ export default function App() {
                     placeholder={UI.searchPlaceholder}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="w-full bg-mc-card border border-mc-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-mc-green/40 focus:ring-1 focus:ring-mc-green/10 transition-all"
+                    className="w-full bg-mc-card border border-mc-border rounded-lg pl-10 pr-4 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-mc-green/40 focus:ring-1 focus:ring-mc-green/10 transition-all"
                   />
                 </div>
                 <select
                   value={category || ''}
                   onChange={e => setCategory(e.target.value || null)}
-                  className="bg-mc-card border border-mc-border rounded-lg px-3 py-2.5 text-sm text-zinc-300 focus:outline-none focus:border-mc-green/40 transition-all min-w-[130px] appearance-none cursor-pointer"
+                  className="bg-mc-card border border-mc-border rounded-lg px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-mc-green/40 transition-all min-w-[120px] appearance-none cursor-pointer"
                 >
                   <option value="">{UI.allCategories}</option>
                   {categories.map(c => (
@@ -352,7 +371,19 @@ export default function App() {
                   ))}
                 </select>
               </div>
-              <div className="grid gap-2">
+
+              <div className="flex items-center justify-between mb-2 px-1">
+                <div className="flex items-center gap-1">
+                  <button onClick={selectAll} className="px-2 py-1 rounded text-[11px] text-zinc-500 hover:text-white hover:bg-white/5 transition-all">{UI.selectAll}</button>
+                  <button onClick={deselectAll} className="px-2 py-1 rounded text-[11px] text-zinc-500 hover:text-white hover:bg-white/5 transition-all">{UI.deselectAll}</button>
+                  <button onClick={invertSelection} className="px-2 py-1 rounded text-[11px] text-zinc-500 hover:text-white hover:bg-white/5 transition-all">{UI.invertSelection}</button>
+                </div>
+                <span className="text-[11px] text-zinc-600 tabular-nums">
+                  {selectedIds.size} / {mods.length}
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-px">
                 {filtered.map(mod => (
                   <ModCard key={mod.id} mod={mod} selected={resolvedIds.has(mod.id)}
                     autoResolved={resolvedIds.has(mod.id) && !selectedIds.has(mod.id)}
@@ -369,15 +400,15 @@ export default function App() {
                 )}
               </div>
               {filtered.length > 0 && (
-                <p className="text-xs text-zinc-700 text-center mt-6 tabular-nums">
+                <p className="text-[11px] text-zinc-700 text-center mt-4 tabular-nums">
                   {filtered.length} / {mods.length}
                 </p>
               )}
             </div>
 
-            <aside className="w-56 shrink-0">
-              <div className="sticky top-24 space-y-4">
-                <div className="grid grid-cols-2 gap-2">
+            <aside className="w-52 shrink-0">
+              <div className="sticky top-24 space-y-3">
+                <div className="grid grid-cols-2 gap-1.5">
                   <StatCard value={selectedIds.size} label={UI.selected} accent />
                   <StatCard value={resolved.length} label={UI.withDeps} />
                   <StatCard value={missing.length} label={UI.missing} danger={missing.length > 0} />
@@ -388,28 +419,28 @@ export default function App() {
 
                 {missing.length > 0 && (
                   <div className="bg-red-500/8 border border-red-500/15 rounded-xl p-3">
-                    <p className="text-red-400 font-medium text-xs mb-2">{UI.missingLabel}</p>
-                    {missing.map(id => <p key={id} className="text-red-300/70 text-xs font-mono truncate">{id}</p>)}
+                    <p className="text-red-400 font-medium text-[11px] mb-1.5">{UI.missingLabel}</p>
+                    {missing.map(id => <p key={id} className="text-red-300/70 text-[10px] font-mono truncate">{id}</p>)}
                   </div>
                 )}
 
                 <div>
-                  <h3 className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wider mb-2.5">{UI.categories}</h3>
-                  <div className="flex flex-wrap gap-1.5">
+                  <h3 className="text-[10px] font-semibold text-zinc-600 uppercase tracking-wider mb-2">{UI.categories}</h3>
+                  <div className="flex flex-wrap gap-1">
                     {categories.map(c => {
                       const count = resolved.filter(m => m.category === c).length;
                       return (
                         <button
                           key={c}
                           onClick={() => setCategory(category === c ? null : c)}
-                          className={`px-2 py-1 rounded-md text-[11px] transition-all ${
+                          className={`px-1.5 py-0.5 rounded text-[10px] transition-all ${
                             category === c
                               ? 'bg-mc-green/15 text-mc-green border border-mc-green/25'
                               : 'bg-white/3 text-zinc-500 hover:bg-white/6 border border-transparent'
                           }`}
                         >
                           {CATEGORY_LABELS[c] || c}
-                          <span className="ml-1 text-zinc-600">{count}</span>
+                          <span className="ml-0.5 text-zinc-600">{count}</span>
                         </button>
                       );
                     })}
@@ -536,7 +567,14 @@ export default function App() {
         )}
 
         {tab === 'graph' && (
-          <DependencyGraph mods={mods} selectedModId={selectedModForGraph} onSelectMod={setSelectedModForGraph} resolvedIds={resolvedIds} />
+          <div className="flex gap-4 h-[calc(100vh-220px)]">
+            <div className="flex-1 min-w-0">
+              <StarMap mods={mods} resolvedIds={resolvedIds} onSelectMod={setSelectedModForGraph} selectedModId={selectedModForGraph} />
+            </div>
+            <div className="w-72 shrink-0">
+              <DependencyGraph mods={mods} selectedModId={selectedModForGraph} onSelectMod={setSelectedModForGraph} resolvedIds={resolvedIds} />
+            </div>
+          </div>
         )}
       </div>
     </div>
