@@ -1,0 +1,136 @@
+{
+  "mods": [
+    {
+      "id": "fabric-api",
+      "name": "Fabric API",
+      "version": "0.100.0+1.21",
+      "required": true,
+      "source": "modrinth",
+      "projectId": "P7dR8mSH",
+      "category": "library",
+      "description": "Core library for Fabric mods",
+      "dependencies": []
+    },
+    {
+      "id": "carpet",
+      "name": "Carpet Mod",
+      "version": "1.21-2.8.0",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "TISv7glA",
+      "category": "redstone",
+      "description": "Minecraft profiling and redstone tools",
+      "dependencies": ["fabric-api"]
+    },
+    {
+      "id": "lithium",
+      "name": "Lithium",
+      "version": "0.13.0",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "gvQqBUqZ",
+      "category": "performance",
+      "description": "Performance optimization mod",
+      "dependencies": ["fabric-api"]
+    },
+    {
+      "id": "sodium",
+      "name": "Sodium",
+      "version": "0.6.0",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "AANobbMI",
+      "category": "performance",
+      "description": "Rendering engine optimization",
+      "dependencies": ["fabric-api"]
+    },
+    {
+      "id": "create",
+      "name": "Create",
+      "version": "0.5.1",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "LNytG5c9",
+      "category": "automation",
+      "description": "Mechanical automation and contraptions",
+      "dependencies": ["fabric-api"]
+    },
+    {
+      "id": "tech-reborn",
+      "name": "Tech Reborn",
+      "version": "5.11.0",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "gHRtMeiB",
+      "category": "automation",
+      "description": "Tech mod with machines and power systems",
+      "dependencies": ["fabric-api"]
+    },
+    {
+      "id": "refined-storage",
+      "name": "Refined Storage",
+      "version": "1.13.0",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "Q7Mm5gMh",
+      "category": "storage",
+      "description": "Digital storage system",
+      "dependencies": ["fabric-api"]
+    },
+    {
+      "id": "applied-energistics2",
+      "name": "Applied Energistics 2",
+      "version": "15.2.0",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "XxWDZp2r",
+      "category": "storage",
+      "description": "Matter energy storage and automation",
+      "dependencies": ["fabric-api"]
+    },
+    {
+      "id": "worldedit",
+      "name": "WorldEdit",
+      "version": "7.3.0",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "2x6w5pRj",
+      "category": "building",
+      "description": "In-game map editor",
+      "dependencies": ["fabric-api"]
+    },
+    {
+      "id": "litematica",
+      "name": "Litematica",
+      "version": "0.16.0",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "bEpr0YwQ",
+      "category": "building",
+      "description": "Schematic mod for creative building",
+      "dependencies": ["fabric-api", "malilib"]
+    },
+    {
+      "id": "malilib",
+      "name": "MaLiLib",
+      "version": "0.18.0",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "GcWjdA9I",
+      "category": "library",
+      "description": "Library for masa's mods",
+      "dependencies": ["fabric-api"]
+    },
+    {
+      "id": "miniphysics",
+      "name": "MiniPhysics",
+      "version": "1.2.0",
+      "required": false,
+      "source": "modrinth",
+      "projectId": "abc12345",
+      "category": "redstone",
+      "description": "Compact redstone components",
+      "dependencies": ["fabric-api", "carpet"]
+    }
+  ]
+}

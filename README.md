@@ -1,11 +1,11 @@
-# MC Full Park - Minecraft 1.21.x 生电整合包
+# MC Full Park - Minecraft 26.1.2 生电整合包
 
 <div align="center">
 
 [![Modrinth](https://img.shields.io/modrinth/dt/cG4k3W8Y?label=Downloads&style=flat-square)](https://modrinth.com/modpack/mc-full-park)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-**Minecraft 1.21.x 自动化生电建筑整合包**
+**Minecraft 26.1.2 自动化生电建筑整合包**
 
 </div>
 

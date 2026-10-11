@@ -12,119 +12,100 @@ on:
         default: '1.0.0'
 
 env:
-  MINECRAFT_VERSION: "1.21"
+  MINECRAFT_VERSION: "26.1.2"
   MOD_LOADER: "fabric"
 
 jobs:
   build-modpack:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Setup Rust (for Rope)
-        uses: dtolnay/rust-action@stable
-        with:
-          toolchain: "stable"
-      
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install Rope CLI
         run: cargo install rope-cli --force
-      
+
       - name: Build modpack
-        run: |
-          npm run pack:build
-      
-      - name: Create modpack archive
-        run: |
-          MODPACK_NAME="MC-Full-Pack-${{ env.MINECRAFT_VERSION }}-${{ env.MOD_LOADER }}"
-          zip -r "${MODPACK_NAME}.zip" client-server-configuration/
-      
+        run: npm run pack:build
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: modpack-${{ github.sha }}
-          path: '*.zip'
+          path: artifacts/*.mcpark
           retention-days: 7
-      
+
   publish-modrinth:
     runs-on: ubuntu-latest
     needs: build-modpack
     if: startsWith(github.ref, 'refs/tags/v')
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: modpack-${{ github.sha }}
           path: './artifacts'
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Set Modrinth Token
-        run: echo "MODRINTH_TOKEN=${{ secrets.MODRINTH_TOKEN }}" >> $GITHUB_ENV
-      
+
       - name: Publish to Modrinth
-        run: |
-          cd artifacts
-          ls -la
-          npx @modrinth/cli upload \
-            --file ./MC-Full-Pack-${{ env.MINECRAFT_VERSION }}-${{ env.MOD_LOADER }}.zip \
-            --version-number ${{ github.ref_name }} \
-            --loader ${{ env.MOD_LOADER }} \
-            --project cG4k3W8Y \
-            --changelog "Release ${{ github.ref_name }}\n\nSee CHANGELOG.md for details." \
-            --sync \
-            --verbose
-      
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: npm run modrinth:push -- ${{ github.ref_name }} "Release ${{ github.ref_name }}"
+
       - name: Update changelog
         run: |
           echo "## v${{ github.ref_name }} - $(date '+%Y-%m-%d')" > CHANGELOG.tmp
           cat CHANGELOG.md >> CHANGELOG.tmp 2>/dev/null || true
           mv CHANGELOG.tmp CHANGELOG.md
-      
+
       - name: Commit changelog
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add CHANGELOG.md
           git commit -m "docs(changelog): update for v${{ github.ref_name }}" || echo "No changes to commit"
-  
+
   create-github-release:
     runs-on: ubuntu-latest
     needs: [build-modpack, publish-modrinth]
     if: startsWith(github.ref, 'refs/tags/v')
-    
+
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: modpack-${{ github.sha }}
           path: './artifacts'
-      
+
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*.zip
+          files: artifacts/*.mcpark
           generate_release_notes: true
           draft: false
           prerelease: false

@@ -1,7 +1,17 @@
 node_modules/
 dist/
+.build/
+artifacts/
 .env
 .env.*
 *.log
 .DS_Store
 Thumbs.db
+%USERPROFILE%/
+work/*.jar
+work/*.mcpark
+work/*.mrpack
+work/parsed.json
+work/modrinth-info.json
+work/mod-deps.json
+work/gen-table.js

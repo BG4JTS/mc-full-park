@@ -171,13 +171,13 @@ async function main() {
     version_number: process.argv[2] || '1.0.0',
     changelog: process.argv[3] || 'Auto-generated release',
     loaders: ['fabric'],
-    game_versions: ['1.21'],
+    game_versions: ['26.1.2'],
     status: 'listed',
     requested_dependencies: []
   };
   
   const publisher = new ModrinthPublisher(token);
-  const modpackPath = './artifacts/MC-Full-Pack-1.21-fabric.zip';
+  const modpackPath = './artifacts/MC-Full-Pack-26.1.2-fabric.zip';
   
   try {
     await publisher.publish(modpackPath, versionInfo);

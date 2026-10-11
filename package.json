@@ -1,7 +1,7 @@
 {
   "name": "mc-full-park",
   "version": "1.0.0",
-  "description": "Minecraft 1.21.x 生电整合包 - 双模式分发系统",
+  "description": "Minecraft 26.1.2 生电整合包 - 双模式分发系统",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -10,7 +10,8 @@
     "lint": "eslint src --ext ts,tsx",
     "check": "tsc --noEmit",
     "modrinth:push": "node scripts/modrinth-push.js",
-    "pack:build": "node scripts/build-pack.js"
+    "pack:build": "node scripts/build-pack.js",
+    "mcpark": "node scripts/mcpark-editor.js"
   },
   "keywords": [
     "minecraft",
@@ -21,9 +22,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@modrinth/sdk": "^2.5.0",
     "axios": "^1.6.2",
     "express": "^4.18.2",
+    "jszip": "^3.10.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "zod": "^3.22.4"
