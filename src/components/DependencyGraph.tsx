@@ -1,5 +1,6 @@
 import type { McParkMod } from '../utils/mcpark-parser';
 import { getDependencyTree } from '../utils/dependency-resolver';
+import { UI } from '../i18n';
 
 interface DependencyGraphProps {
   mods: McParkMod[];
@@ -22,21 +23,21 @@ export default function DependencyGraph({ mods, selectedModId, onSelectMod, reso
   }
 
   return (
-    <div className="bg-mc-darker rounded-lg border border-white/10 p-6">
-      <h2 className="text-lg font-semibold mb-4">Dependency Graph</h2>
+    <div className="bg-mc-darker/60 rounded-xl border border-white/8 p-6">
+      <h2 className="text-lg font-bold mb-4 text-white">{UI.dependencyGraph}</h2>
 
       {!selectedMod ? (
         <div>
-          <p className="text-gray-400 text-sm mb-4">Select a mod to view its dependency tree.</p>
-          <div className="grid grid-cols-2 gap-2">
+          <p className="text-gray-400 text-sm mb-4">{UI.selectModHint}</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {mods.map(mod => (
               <button
                 key={mod.id}
                 onClick={() => onSelectMod(mod.id)}
-                className={`text-left px-3 py-2 rounded text-sm transition-colors ${
+                className={`text-left px-3 py-2 rounded-lg text-sm transition-all truncate ${
                   resolvedIds.has(mod.id)
-                    ? 'bg-mc-accent/30 text-white hover:bg-mc-accent/50'
-                    : 'bg-mc-accent/10 text-gray-400 hover:bg-mc-accent/20'
+                    ? 'bg-mc-green/10 text-white hover:bg-mc-green/20 border border-mc-green/20'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/8 border border-white/5'
                 }`}
               >
                 {mod.name}
@@ -46,32 +47,39 @@ export default function DependencyGraph({ mods, selectedModId, onSelectMod, reso
         </div>
       ) : (
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <button onClick={() => onSelectMod(null)} className="text-sm text-gray-400 hover:text-white">&larr; Back</button>
+          <div className="flex items-center gap-3 mb-5">
+            <button
+              onClick={() => onSelectMod(null)}
+              className="text-sm text-gray-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5"
+            >
+              {UI.back}
+            </button>
             <h3 className="text-xl font-bold text-white">{selectedMod.name}</h3>
-            <span className="text-sm text-gray-400">v{selectedMod.version}</span>
+            <span className="text-sm text-gray-500 font-mono">v{selectedMod.version}</span>
           </div>
 
           <div className="space-y-6">
             <div>
-              <h4 className="text-sm font-medium text-mc-green mb-2">Dependencies ({selectedMod.dependencies.length})</h4>
+              <h4 className="text-sm font-semibold text-mc-green mb-2.5">
+                {UI.dependencies} ({selectedMod.dependencies.length})
+              </h4>
               {selectedMod.dependencies.length === 0 ? (
-                <p className="text-sm text-gray-500">No dependencies</p>
+                <p className="text-sm text-gray-500">{UI.noDependencies}</p>
               ) : (
                 <div className="ml-4 space-y-2">
                   {selectedMod.dependencies.map(depId => {
                     const dep = modMap.get(depId);
                     return (
                       <div key={depId} className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-mc-green" />
+                        <div className="w-2 h-2 rounded-full bg-mc-green shrink-0" />
                         <button
                           onClick={() => onSelectMod(depId)}
-                          className="text-sm text-white hover:text-mc-green hover:underline"
+                          className="text-sm text-white hover:text-mc-green hover:underline transition-colors"
                         >
                           {dep?.name || depId}
                         </button>
-                        {dep && <span className="text-xs text-gray-500">v{dep.version}</span>}
-                        {!dep && <span className="text-xs text-red-400">(missing)</span>}
+                        {dep && <span className="text-xs text-gray-500 font-mono">v{dep.version}</span>}
+                        {!dep && <span className="text-xs text-red-400">{UI.missingDep}</span>}
                       </div>
                     );
                   })}
@@ -80,19 +88,21 @@ export default function DependencyGraph({ mods, selectedModId, onSelectMod, reso
             </div>
 
             <div>
-              <h4 className="text-sm font-medium text-blue-400 mb-2">Dependents ({(reverseDeps.get(selectedMod.id) || []).length})</h4>
+              <h4 className="text-sm font-semibold text-blue-400 mb-2.5">
+                {UI.dependents} ({(reverseDeps.get(selectedMod.id) || []).length})
+              </h4>
               {(reverseDeps.get(selectedMod.id) || []).length === 0 ? (
-                <p className="text-sm text-gray-500">No other mods depend on this</p>
+                <p className="text-sm text-gray-500">{UI.noDependents}</p>
               ) : (
                 <div className="ml-4 space-y-2">
                   {(reverseDeps.get(selectedMod.id) || []).map(depId => {
                     const dep = modMap.get(depId);
                     return (
                       <div key={depId} className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-400" />
+                        <div className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
                         <button
                           onClick={() => onSelectMod(depId)}
-                          className="text-sm text-white hover:text-blue-400 hover:underline"
+                          className="text-sm text-white hover:text-blue-400 hover:underline transition-colors"
                         >
                           {dep?.name || depId}
                         </button>
@@ -105,8 +115,8 @@ export default function DependencyGraph({ mods, selectedModId, onSelectMod, reso
 
             {tree && tree.size > 1 && (
               <div>
-                <h4 className="text-sm font-medium text-yellow-400 mb-2">Full Dependency Tree</h4>
-                <div className="bg-mc-dark rounded p-3 font-mono text-xs">
+                <h4 className="text-sm font-semibold text-yellow-400 mb-2.5">{UI.fullTree}</h4>
+                <div className="bg-mc-dark/80 rounded-lg p-4 font-mono text-xs border border-white/5">
                   {renderTree(selectedMod.id, tree, modMap, new Set(), 0)}
                 </div>
               </div>
@@ -126,7 +136,7 @@ function renderTree(
   depth: number,
 ): JSX.Element {
   if (visited.has(id)) {
-    return <div style={{ paddingLeft: depth * 16 }} className="text-gray-600">{'  '.repeat(depth)}{id} (circular)</div>;
+    return <div style={{ paddingLeft: depth * 16 }} className="text-gray-600">{'  '.repeat(depth)}{id} ({UI.circularDep})</div>;
   }
   visited.add(id);
   const mod = modMap.get(id);

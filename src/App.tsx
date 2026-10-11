@@ -5,14 +5,16 @@ import { resolveDependencies, getCategories, filterMods } from './utils/dependen
 import { searchMods, type ModrinthProject } from './utils/modrinth-api';
 import { csvToMods, downloadCsv } from './utils/csv-utils';
 import { DEFAULT_CONFIG, configToToml, parseTomlConfig, evaluateCond, type PackConfig, type ModEntry } from './utils/config-parser';
+import { PACK_MODS } from './data/mods';
+import { CATEGORY_LABELS, TAB_LABELS, UI } from './i18n';
 import ModCard from './components/ModCard';
 import DependencyGraph from './components/DependencyGraph';
 
 type Tab = 'selector' | 'config' | 'search' | 'graph';
 
 export default function App() {
-  const [mods, setMods] = useState<McParkMod[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [mods, setMods] = useState<McParkMod[]>(PACK_MODS);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(PACK_MODS.filter(m => m.required).map(m => m.id)));
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('selector');
@@ -57,6 +59,14 @@ export default function App() {
     });
   }, [mods]);
 
+  const showStatus = useCallback((template: string, vars: Record<string, string | number>) => {
+    let msg = template;
+    for (const [k, v] of Object.entries(vars)) {
+      msg = msg.replace(`{${k}}`, String(v));
+    }
+    setStatusMsg(msg);
+  }, []);
+
   const handleImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -64,12 +74,12 @@ export default function App() {
       const manifest = await parseMcpark(file);
       setMods(manifest.files);
       setSelectedIds(new Set(manifest.files.filter(m => m.required).map(m => m.id)));
-      setStatusMsg(`Imported "${manifest.name}" v${manifest.versionId} (${manifest.files.length} mods)`);
+      showStatus(UI.imported, { name: manifest.name, version: manifest.versionId, count: manifest.files.length });
     } catch (err) {
-      setStatusMsg(`Import failed: ${(err as Error).message}`);
+      showStatus(UI.importFailed, { error: (err as Error).message });
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, []);
+  }, [showStatus]);
 
   const handleCsvImport = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,11 +92,11 @@ export default function App() {
         for (const m of imported) existing.set(m.id, m);
         return Array.from(existing.values());
       });
-      setStatusMsg(`Imported ${imported.length} mods from CSV`);
+      showStatus(UI.importedCsv, { count: imported.length });
     };
     reader.readAsText(file);
     if (csvInputRef.current) csvInputRef.current.value = '';
-  }, []);
+  }, [showStatus]);
 
   const addFromModrinth = useCallback(async (project: ModrinthProject) => {
     const newMod: McParkMod = {
@@ -106,8 +116,8 @@ export default function App() {
       return [...prev, newMod];
     });
     setSelectedIds(prev => new Set([...prev, newMod.id]));
-    setStatusMsg(`Added ${project.title} from Modrinth`);
-  }, []);
+    showStatus(UI.addedFromModrinth, { name: project.title });
+  }, [showStatus]);
 
   const syncConfigToMods = useCallback(() => {
     const parsed = parseTomlConfig(tomlText);
@@ -137,8 +147,8 @@ export default function App() {
       });
     setMods(newMods);
     setSelectedIds(new Set(newMods.map(m => m.id)));
-    setStatusMsg(`Synced ${newMods.length} mods from TOML config`);
-  }, [tomlText, mods, mcVersion, loader]);
+    showStatus(UI.syncedFromToml, { count: newMods.length });
+  }, [tomlText, mods, mcVersion, loader, showStatus]);
 
   const syncModsToConfig = useCallback(() => {
     const entries: ModEntry[] = resolved.map(m => ({
@@ -148,7 +158,7 @@ export default function App() {
     const newConfig = { ...config, mods: entries };
     setConfig(newConfig);
     setTomlText(configToToml(newConfig));
-    setStatusMsg('Synced selection to TOML config');
+    setStatusMsg(UI.syncedToToml);
   }, [resolved, config]);
 
   const handleExport = useCallback(async () => {
@@ -170,7 +180,7 @@ export default function App() {
     a.download = `${config.metadata.name}-${mcVersion}-${loader}.mcpark`;
     a.click();
     URL.revokeObjectURL(url);
-    setStatusMsg('Exported .mcpark');
+    setStatusMsg(UI.exportedMcpark);
   }, [resolved, config, mcVersion, loader]);
 
   const exportMrpack = useCallback(() => {
@@ -196,7 +206,7 @@ export default function App() {
     a.download = `modrinth.index.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setStatusMsg('Exported modrinth.index.json');
+    setStatusMsg(UI.exportedMrpack);
   }, [resolved, config, mcVersion, loader]);
 
   const exportCurseForge = useCallback(() => {
@@ -217,7 +227,7 @@ export default function App() {
     a.download = 'manifest.json';
     a.click();
     URL.revokeObjectURL(url);
-    setStatusMsg('Exported CurseForge manifest.json');
+    setStatusMsg(UI.exportedCurseForge);
   }, [resolved, config, mcVersion, loader, selectedIds]);
 
   const exportToml = useCallback(() => {
@@ -228,71 +238,90 @@ export default function App() {
     a.download = 'config.toml';
     a.click();
     URL.revokeObjectURL(url);
-    setStatusMsg('Exported config.toml');
+    setStatusMsg(UI.exportedToml);
   }, [tomlText]);
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'selector', label: 'Mod Selector' },
-    { key: 'config', label: 'TOML Config' },
-    { key: 'search', label: 'Modrinth Search' },
-    { key: 'graph', label: 'Dependency Graph' },
+    { key: 'selector', label: TAB_LABELS.selector },
+    { key: 'config', label: TAB_LABELS.config },
+    { key: 'search', label: TAB_LABELS.search },
+    { key: 'graph', label: TAB_LABELS.graph },
   ];
 
   return (
     <div className="min-h-screen bg-mc-dark">
-      <header className="bg-mc-darker border-b border-white/10 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="bg-gradient-to-r from-mc-darker via-mc-darker to-mc-accent/30 border-b border-white/8 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-white">MC Full Park</h1>
-            <p className="text-sm text-gray-400">Minecraft {mcVersion} {loader} - Mod Pack Builder</p>
+            <h1 className="text-xl font-bold text-white tracking-tight">{UI.appTitle}</h1>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Minecraft {mcVersion} · {loader} · {UI.appSubtitle}
+            </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-1.5 flex-wrap items-center">
             <input ref={fileInputRef} type="file" accept=".mcpark,.mrpack,.zip" onChange={handleImport} className="hidden" />
             <input ref={csvInputRef} type="file" accept=".csv" onChange={handleCsvImport} className="hidden" />
-            <button onClick={() => fileInputRef.current?.click()} className="px-3 py-1.5 bg-mc-accent hover:bg-mc-accent/80 rounded text-xs transition-colors">Import .mcpark</button>
-            <button onClick={() => csvInputRef.current?.click()} className="px-3 py-1.5 bg-mc-accent hover:bg-mc-accent/80 rounded text-xs transition-colors">Import CSV</button>
-            <button onClick={() => downloadCsv(mods)} className="px-3 py-1.5 bg-mc-accent hover:bg-mc-accent/80 rounded text-xs transition-colors">Export CSV</button>
-            <div className="w-px bg-white/10" />
-            <button onClick={handleExport} className="px-3 py-1.5 bg-mc-green hover:bg-mc-green/80 rounded text-xs font-medium transition-colors">.mcpark</button>
-            <button onClick={exportMrpack} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 rounded text-xs transition-colors">.mrpack</button>
-            <button onClick={exportCurseForge} className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 rounded text-xs transition-colors">CurseForge</button>
-            <button onClick={exportToml} className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 rounded text-xs transition-colors">config.toml</button>
+            <button onClick={() => fileInputRef.current?.click()} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-md text-xs text-gray-300 transition-all">{UI.importMcpark}</button>
+            <button onClick={() => csvInputRef.current?.click()} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-md text-xs text-gray-300 transition-all">{UI.importCsv}</button>
+            <button onClick={() => downloadCsv(mods)} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-md text-xs text-gray-300 transition-all">{UI.exportCsv}</button>
+            <div className="w-px h-5 bg-white/10 mx-1" />
+            <button onClick={handleExport} className="px-3 py-1.5 bg-mc-green/90 hover:bg-mc-green rounded-md text-xs font-medium text-white transition-all">{'.mcpark'}</button>
+            <button onClick={exportMrpack} className="px-3 py-1.5 bg-emerald-600/90 hover:bg-emerald-600 rounded-md text-xs text-white transition-all">{'.mrpack'}</button>
+            <button onClick={exportCurseForge} className="px-3 py-1.5 bg-orange-600/90 hover:bg-orange-600 rounded-md text-xs text-white transition-all">CurseForge</button>
+            <button onClick={exportToml} className="px-3 py-1.5 bg-indigo-600/90 hover:bg-indigo-600 rounded-md text-xs text-white transition-all">config.toml</button>
           </div>
         </div>
       </header>
 
       {statusMsg && (
-        <div className="bg-mc-accent/50 border-b border-mc-accent px-6 py-2 text-sm text-center flex items-center justify-center gap-4">
-          <span>{statusMsg}</span>
-          <button onClick={() => setStatusMsg('')} className="text-gray-400 hover:text-white text-xs">close</button>
+        <div className="bg-mc-green/15 border-b border-mc-green/20 px-6 py-2 text-sm flex items-center justify-center gap-4">
+          <span className="text-mc-green">{statusMsg}</span>
+          <button onClick={() => setStatusMsg('')} className="text-gray-500 hover:text-white text-xs transition-colors">{UI.close}</button>
         </div>
       )}
 
       <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex gap-1 mb-4 border-b border-white/10">
+        <nav className="flex gap-0.5 mb-5 border-b border-white/8">
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-4 py-2 text-sm transition-colors border-b-2 ${
-                tab === t.key ? 'border-mc-green text-white' : 'border-transparent text-gray-400 hover:text-white'
+              className={`px-4 py-2.5 text-sm font-medium transition-all border-b-2 rounded-t-md ${
+                tab === t.key
+                  ? 'border-mc-green text-white bg-white/3'
+                  : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-white/3'
               }`}
             >
               {t.label}
             </button>
           ))}
-        </div>
+        </nav>
 
         {tab === 'selector' && (
           <div className="flex gap-6">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="flex gap-3 mb-4">
-                <input type="text" placeholder="Search mods..." value={search} onChange={e => setSearch(e.target.value)}
-                  className="flex-1 bg-mc-darker border border-white/10 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-mc-green text-sm" />
-                <select value={category || ''} onChange={e => setCategory(e.target.value || null)}
-                  className="bg-mc-darker border border-white/10 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-mc-green">
-                  <option value="">All</option>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                <div className="relative flex-1">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder={UI.searchPlaceholder}
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full bg-mc-darker/80 border border-white/8 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-mc-green/50 focus:ring-1 focus:ring-mc-green/20 transition-all"
+                  />
+                </div>
+                <select
+                  value={category || ''}
+                  onChange={e => setCategory(e.target.value || null)}
+                  className="bg-mc-darker/80 border border-white/8 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-mc-green/50 transition-all min-w-[120px]"
+                >
+                  <option value="">{UI.allCategories}</option>
+                  {categories.map(c => (
+                    <option key={c} value={c}>{CATEGORY_LABELS[c] || c}</option>
+                  ))}
                 </select>
               </div>
               <div className="grid gap-2">
@@ -302,32 +331,65 @@ export default function App() {
                     onToggle={() => toggleMod(mod.id)}
                     onShowGraph={() => { setSelectedModForGraph(mod.id); setTab('graph'); }} />
                 ))}
-                {filtered.length === 0 && <p className="text-gray-500 text-center py-8">No mods. Use "Modrinth Search" or "Import CSV" to add mods.</p>}
+                {filtered.length === 0 && (
+                  <p className="text-gray-500 text-center py-12 text-sm">{UI.noMods}</p>
+                )}
               </div>
+              {filtered.length > 0 && (
+                <p className="text-xs text-gray-600 text-center mt-4">
+                  {filtered.length} / {mods.length}
+                </p>
+              )}
             </div>
-            <aside className="w-64 shrink-0">
-              <div className="bg-mc-darker rounded-lg border border-white/10 p-4 sticky top-6">
-                <h2 className="text-sm font-semibold mb-3">Summary</h2>
-                <div className="space-y-1.5 text-xs">
-                  <div className="flex justify-between"><span className="text-gray-400">Selected</span><span className="text-mc-green">{selectedIds.size}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-400">With deps</span><span>{resolved.length}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-400">Missing</span><span className={missing.length ? 'text-red-400' : 'text-gray-500'}>{missing.length}</span></div>
-                  {circular.length > 0 && <div className="flex justify-between"><span className="text-gray-400">Circular</span><span className="text-yellow-400">{circular.length}</span></div>}
+            <aside className="w-60 shrink-0">
+              <div className="bg-mc-darker/60 rounded-xl border border-white/8 p-4 sticky top-6 space-y-4">
+                <h2 className="text-sm font-bold text-white">{UI.summary}</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-mc-green/10 rounded-lg p-2.5 text-center">
+                    <p className="text-lg font-bold text-mc-green">{selectedIds.size}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{UI.selected}</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-2.5 text-center">
+                    <p className="text-lg font-bold text-white">{resolved.length}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{UI.withDeps}</p>
+                  </div>
+                  <div className={`rounded-lg p-2.5 text-center ${missing.length ? 'bg-red-500/10' : 'bg-white/5'}`}>
+                    <p className={`text-lg font-bold ${missing.length ? 'text-red-400' : 'text-gray-500'}`}>{missing.length}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{UI.missing}</p>
+                  </div>
+                  {circular.length > 0 && (
+                    <div className="bg-yellow-500/10 rounded-lg p-2.5 text-center">
+                      <p className="text-lg font-bold text-yellow-400">{circular.length}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">{UI.circular}</p>
+                    </div>
+                  )}
                 </div>
                 {missing.length > 0 && (
-                  <div className="mt-3 p-2 bg-red-900/30 border border-red-500/30 rounded text-xs">
-                    <p className="text-red-400 font-medium mb-1">Missing:</p>
-                    {missing.map(id => <p key={id} className="text-red-300">{id}</p>)}
+                  <div className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <p className="text-red-400 font-medium text-xs mb-1.5">{UI.missingLabel}</p>
+                    {missing.map(id => <p key={id} className="text-red-300/80 text-xs font-mono truncate">{id}</p>)}
                   </div>
                 )}
-                <div className="mt-3 pt-3 border-t border-white/10">
-                  <h3 className="text-xs font-medium text-gray-400 mb-1.5">Categories</h3>
-                  <div className="flex flex-wrap gap-1">
-                    {categories.map(c => (
-                      <span key={c} className="px-1.5 py-0.5 bg-mc-accent/50 rounded text-[10px] text-gray-300">
-                        {c} ({resolved.filter(m => m.category === c).length})
-                      </span>
-                    ))}
+                <div className="pt-3 border-t border-white/8">
+                  <h3 className="text-xs font-semibold text-gray-400 mb-2">{UI.categories}</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {categories.map(c => {
+                      const count = resolved.filter(m => m.category === c).length;
+                      return (
+                        <button
+                          key={c}
+                          onClick={() => { setCategory(category === c ? null : c); }}
+                          className={`px-2 py-0.5 rounded-md text-[11px] transition-all ${
+                            category === c
+                              ? 'bg-mc-green/20 text-mc-green border border-mc-green/30'
+                              : 'bg-white/5 text-gray-400 hover:bg-white/8 border border-transparent'
+                          }`}
+                        >
+                          {CATEGORY_LABELS[c] || c}
+                          <span className="ml-1 opacity-60">{count}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -339,56 +401,64 @@ export default function App() {
           <div className="flex gap-4 h-[calc(100vh-220px)]">
             <div className="flex-1 flex flex-col">
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-semibold text-gray-300">TOML Editor</h2>
+                <h2 className="text-sm font-bold text-white">{UI.tomlEditor}</h2>
                 <div className="flex gap-2">
-                  <button onClick={syncConfigToMods} className="px-3 py-1 bg-mc-green/80 hover:bg-mc-green rounded text-xs">Apply to Mods</button>
-                  <button onClick={syncModsToConfig} className="px-3 py-1 bg-mc-accent hover:bg-mc-accent/80 rounded text-xs">Sync from Selection</button>
+                  <button onClick={syncConfigToMods} className="px-3 py-1.5 bg-mc-green/80 hover:bg-mc-green rounded-md text-xs font-medium transition-all">{UI.applyToMods}</button>
+                  <button onClick={syncModsToConfig} className="px-3 py-1.5 bg-white/8 hover:bg-white/12 border border-white/10 rounded-md text-xs text-gray-300 transition-all">{UI.syncFromSelection}</button>
                 </div>
               </div>
               <textarea
                 value={tomlText}
                 onChange={e => setTomlText(e.target.value)}
-                className="flex-1 bg-mc-darker border border-white/10 rounded p-4 font-mono text-xs text-gray-300 focus:outline-none focus:border-mc-green resize-none scrollbar-thin"
+                className="flex-1 bg-mc-darker/80 border border-white/8 rounded-lg p-4 font-mono text-xs text-gray-300 focus:outline-none focus:border-mc-green/50 focus:ring-1 focus:ring-mc-green/20 resize-none transition-all"
                 spellCheck={false}
               />
             </div>
             <div className="w-80 flex flex-col">
-              <h2 className="text-sm font-semibold text-gray-300 mb-2">Config Preview</h2>
-              <div className="flex-1 bg-mc-darker border border-white/10 rounded p-4 overflow-auto scrollbar-thin text-xs space-y-3">
-                <div>
-                  <span className="text-gray-500">Name: </span><span className="text-white">{config.metadata.name}</span>
+              <h2 className="text-sm font-bold text-white mb-2">{UI.configPreview}</h2>
+              <div className="flex-1 bg-mc-darker/60 border border-white/8 rounded-lg p-4 overflow-auto text-xs space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">{UI.nameLabel}</span>
+                  <span className="text-white font-medium">{config.metadata.name}</span>
                 </div>
-                <div>
-                  <span className="text-gray-500">MC: </span><span className="text-white">{config.minecraft.version.join(', ')}</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">{UI.mcLabel}</span>
+                  <span className="text-white font-mono">{config.minecraft.version.join(', ')}</span>
                 </div>
-                <div>
-                  <span className="text-gray-500">Loader: </span><span className="text-white">{config.minecraft.mod_loader.join(', ')}</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">{UI.loaderLabel}</span>
+                  <span className="text-white">{config.minecraft.mod_loader.join(', ')}</span>
                 </div>
-                <div>
-                  <span className="text-gray-500">Mods: </span><span className="text-white">{config.mods.length}</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">{UI.modsLabel}</span>
+                  <span className="text-mc-green font-bold">{config.mods.length}</span>
                 </div>
-                <div>
-                  <span className="text-gray-500">Output: </span><span className="text-white">{config.output.format.join(', ')}</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">{UI.outputLabel}</span>
+                  <span className="text-white">{config.output.format.join(', ')}</span>
                 </div>
                 {config.features.length > 0 && (
-                  <div>
-                    <span className="text-gray-500">Features: </span><span className="text-white">{config.features.join(', ')}</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">{UI.featuresLabel}</span>
+                    <span className="text-white">{config.features.join(', ')}</span>
                   </div>
                 )}
-                <div className="pt-2 border-t border-white/10">
-                  <p className="text-gray-500 mb-1">Mod entries:</p>
+                <div className="pt-3 border-t border-white/8">
+                  <p className="text-gray-500 mb-2 font-medium">{UI.modEntries}</p>
                   {config.mods.slice(0, 20).map((m, i) => {
                     const entry = typeof m === 'string' ? { id: m } : m;
                     return (
-                      <div key={i} className="text-gray-400 pl-2 border-l border-white/5 mb-1">
-                        {entry.id}
-                        {entry.only_version && <span className="text-yellow-400 ml-1">[v:{entry.only_version.join(',')}]</span>}
-                        {entry.only_loader && <span className="text-blue-400 ml-1">[l:{entry.only_loader.join(',')}]</span>}
-                        {entry.feature && <span className="text-green-400 ml-1">[f:{entry.feature}]</span>}
+                      <div key={i} className="text-gray-400 pl-2 border-l-2 border-white/5 mb-1.5 hover:border-mc-green/30 transition-colors">
+                        <span className="font-mono">{entry.id}</span>
+                        {entry.only_version && <span className="text-yellow-400/80 ml-1 text-[10px]">[v:{entry.only_version.join(',')}]</span>}
+                        {entry.only_loader && <span className="text-blue-400/80 ml-1 text-[10px]">[l:{entry.only_loader.join(',')}]</span>}
+                        {entry.feature && <span className="text-green-400/80 ml-1 text-[10px]">[f:{entry.feature}]</span>}
                       </div>
                     );
                   })}
-                  {config.mods.length > 20 && <p className="text-gray-600 pl-2">...and {config.mods.length - 20} more</p>}
+                  {config.mods.length > 20 && (
+                    <p className="text-gray-600 pl-2 text-[10px]">{UI.andMore.replace('{count}', String(config.mods.length - 20))}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -398,37 +468,46 @@ export default function App() {
         {tab === 'search' && (
           <div>
             <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Search Modrinth for mods..."
-                value={modrinthQuery}
-                onChange={e => setModrinthQuery(e.target.value)}
-                className="w-full bg-mc-darker border border-white/10 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-mc-green text-sm"
-              />
-              <p className="text-xs text-gray-500 mt-1">Searching for MC {mcVersion} / {loader}</p>
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder={UI.modrinthSearchPlaceholder}
+                  value={modrinthQuery}
+                  onChange={e => setModrinthQuery(e.target.value)}
+                  className="w-full bg-mc-darker/80 border border-white/8 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-mc-green/50 focus:ring-1 focus:ring-mc-green/20 transition-all"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1.5">
+                {UI.searchingFor.replace('{version}', mcVersion).replace('{loader}', loader)}
+              </p>
             </div>
-            {searching && <p className="text-gray-400 text-sm">Searching...</p>}
+            {searching && <p className="text-gray-400 text-sm">{UI.searching}</p>}
             <div className="grid gap-2">
               {modrinthResults.map(project => (
-                <div key={project.id} className="bg-mc-darker border border-white/10 rounded-lg p-4 flex items-start justify-between gap-3 hover:border-white/20 transition-colors">
-                  <div className="flex items-start gap-3">
+                <div key={project.id} className="bg-mc-darker/60 border border-white/8 rounded-lg p-4 flex items-start justify-between gap-3 hover:border-white/15 transition-all group">
+                  <div className="flex items-start gap-3 min-w-0">
                     {project.icon_url && (
-                      <img src={project.icon_url} alt="" className="w-10 h-10 rounded" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      <img src={project.icon_url} alt="" className="w-10 h-10 rounded-md shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     )}
-                    <div>
-                      <h3 className="font-semibold text-white text-sm">{project.title}</h3>
-                      <p className="text-xs text-gray-400 mt-0.5">{project.description}</p>
-                      <div className="flex gap-2 mt-1">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-white text-sm truncate">{project.title}</h3>
+                      <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{project.description}</p>
+                      <div className="flex gap-2 mt-1.5 items-center flex-wrap">
                         {project.categories.slice(0, 4).map(c => (
-                          <span key={c} className="px-1.5 py-0.5 bg-mc-accent/30 rounded text-[10px] text-gray-400">{c}</span>
+                          <span key={c} className="px-1.5 py-0.5 bg-white/5 rounded text-[10px] text-gray-400">{c}</span>
                         ))}
-                        <span className="text-[10px] text-gray-500">{project.downloads.toLocaleString()} downloads</span>
+                        <span className="text-[10px] text-gray-500">{project.downloads.toLocaleString()} {UI.downloads}</span>
                       </div>
                     </div>
                   </div>
-                  <button onClick={() => addFromModrinth(project)}
-                    className="shrink-0 px-3 py-1.5 bg-mc-green hover:bg-mc-green/80 rounded text-xs transition-colors">
-                    Add
+                  <button
+                    onClick={() => addFromModrinth(project)}
+                    className="shrink-0 px-3 py-1.5 bg-mc-green/80 hover:bg-mc-green rounded-md text-xs font-medium transition-all opacity-80 group-hover:opacity-100"
+                  >
+                    {UI.add}
                   </button>
                 </div>
               ))}
