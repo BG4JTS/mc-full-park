@@ -115,6 +115,13 @@ export default function StarMap({ mods, resolvedIds, onSelectMod, selectedModId 
       stars.push([Math.random() * sizeRef.current.w, Math.random() * sizeRef.current.h, Math.random() * 0.4 + 0.05]);
     }
 
+    const particles: { edge: number; t: number; speed: number }[] = [];
+    edgesRef.current.forEach((_, i) => {
+      if (Math.random() < 0.4) {
+        particles.push({ edge: i, t: Math.random(), speed: 0.001 + Math.random() * 0.003 });
+      }
+    });
+
     let alpha = 1;
 
     const simulate = () => {
@@ -132,11 +139,23 @@ export default function StarMap({ mods, resolvedIds, onSelectMod, selectedModId 
           let dist2 = dx * dx + dy * dy;
           if (dist2 < 1) dist2 = 1;
           const dist = Math.sqrt(dist2);
-          const force = (-25 * alpha) / dist2;
-          const fx = (dx / dist) * force;
-          const fy = (dy / dist) * force;
-          if (!a.pinned) { a.vx -= fx; a.vy -= fy; }
-          if (!b.pinned) { b.vx += fx; b.vy += fy; }
+
+          const chargeForce = (-25 * alpha) / dist2;
+          const cfx = (dx / dist) * chargeForce;
+          const cfy = (dy / dist) * chargeForce;
+          if (!a.pinned) { a.vx -= cfx; a.vy -= cfy; }
+          if (!b.pinned) { b.vx += cfx; b.vy += cfy; }
+
+          const rA = Math.max(3, Math.min(10, 3 + a.degree * 1.2));
+          const rB = Math.max(3, Math.min(10, 3 + b.degree * 1.2));
+          const minDist = rA + rB + 6;
+          if (dist < minDist) {
+            const overlap = (minDist - dist) * 0.5;
+            const ox = (dx / dist) * overlap;
+            const oy = (dy / dist) * overlap;
+            if (!a.pinned) { a.x -= ox; a.y -= oy; }
+            if (!b.pinned) { b.x += ox; b.y += oy; }
+          }
         }
       }
 
@@ -206,6 +225,21 @@ export default function StarMap({ mods, resolvedIds, onSelectMod, selectedModId 
           ctx.lineWidth = 0.5;
         }
         ctx.stroke();
+      }
+
+      for (const p of particles) {
+        p.t += p.speed;
+        if (p.t > 1) p.t -= 1;
+        const [si, ti] = edges[p.edge] || [0, 0];
+        const s = nodes[si], nd = nodes[ti];
+        if (!s || !nd) continue;
+        const x = s.x + (nd.x - s.x) * p.t;
+        const y = s.y + (nd.y - s.y) * p.t;
+        const isHl = hov === s.id || hov === nd.id || sel === s.id || sel === nd.id;
+        ctx.beginPath();
+        ctx.arc(x, y, isHl ? 1.5 : 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = isHl ? 'rgba(16,185,129,0.6)' : 'rgba(16,185,129,0.15)';
+        ctx.fill();
       }
 
       for (const node of nodes) {
