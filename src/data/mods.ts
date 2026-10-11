@@ -391,28 +391,11 @@ export const PACK_MODS: McParkMod[] = [
     "name": "ImmediatelyFast",
     "version": "1.15.2+26",
     "required": false,
-    "category": "other",
+    "category": "performance",
     "description": "Speed up immediate mode rendering in Minecraft",
     "source": "modrinth",
     "projectId": "5ZwdcRci",
     "dependencies": [],
-    "env": {
-      "client": "required",
-      "server": "required"
-    }
-  },
-  {
-    "id": "konkrete",
-    "name": "Konkrete",
-    "version": "1.10.2_MC_26",
-    "required": false,
-    "category": "library",
-    "description": "Just another boring library mod.",
-    "source": "modrinth",
-    "projectId": "J81TRJWm",
-    "dependencies": [
-      "fabric-api"
-    ],
     "env": {
       "client": "required",
       "server": "required"
@@ -963,25 +946,6 @@ export const PACK_MODS: McParkMod[] = [
     }
   },
   {
-    "id": "fancymenu",
-    "name": "FancyMenu",
-    "version": "3.9.1_MC_26",
-    "required": false,
-    "category": "library",
-    "description": "Customize Minecraft's menus with ease!",
-    "source": "modrinth",
-    "projectId": "Wq5SjeWM",
-    "dependencies": [
-      "fabric-api",
-      "konkrete",
-      "melody"
-    ],
-    "env": {
-      "client": "required",
-      "server": "required"
-    }
-  },
-  {
     "id": "no-chat-reports",
     "name": "No Chat Reports",
     "version": "2.19.0",
@@ -1070,23 +1034,6 @@ export const PACK_MODS: McParkMod[] = [
     "source": "modrinth",
     "projectId": "9eGKb6K1",
     "dependencies": [],
-    "env": {
-      "client": "required",
-      "server": "required"
-    }
-  },
-  {
-    "id": "melody",
-    "name": "Melody",
-    "version": "1.0.16_MC_26",
-    "required": false,
-    "category": "library",
-    "description": "OpenAL-based library mod for playing background music.",
-    "source": "modrinth",
-    "projectId": "CVT4pFB2",
-    "dependencies": [
-      "fabric-api"
-    ],
     "env": {
       "client": "required",
       "server": "required"
@@ -1823,6 +1770,535 @@ export const PACK_MODS: McParkMod[] = [
     "env": {
       "client": "required",
       "server": "optional"
+    }
+  }
+  ,
+  {
+    "id": "carpet",
+    "name": "Carpet",
+    "version": "latest",
+    "required": false,
+    "category": "redstone",
+    "description": "Take full control over your vanilla game; the foundation for technical Minecraft",
+    "source": "modrinth",
+    "projectId": "TISvIxsL",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "mouse-tweaks",
+    "name": "Mouse Tweaks",
+    "version": "latest",
+    "required": false,
+    "category": "ui",
+    "description": "Mouse button inventory management - drag, shift-click, and more",
+    "source": "modrinth",
+    "projectId": "aC3cZGhw",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "betterf3",
+    "name": "BetterF3",
+    "version": "latest",
+    "required": false,
+    "category": "ui",
+    "description": "Customizable, human-readable debug HUD (F3 screen)",
+    "source": "modrinth",
+    "projectId": "8fKl2pVQ",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "debugify",
+    "name": "Debugify",
+    "version": "latest",
+    "required": false,
+    "category": "other",
+    "description": "Fixes 70+ vanilla Minecraft bugs from the bug tracker",
+    "source": "modrinth",
+    "projectId": "4OgeTL7e",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "shulkerboxtooltip",
+    "name": "Shulker Box Tooltip",
+    "version": "latest",
+    "required": false,
+    "category": "ui",
+    "description": "View contents of shulker boxes from your inventory tooltip",
+    "source": "modrinth",
+    "projectId": "5kq90LkX",
+    "dependencies": [
+      "fabric-api"
+    ],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "auth-me",
+    "name": "Auth Me",
+    "version": "latest",
+    "required": false,
+    "category": "other",
+    "description": "Re-validate Microsoft auth session without restarting the game",
+    "source": "modrinth",
+    "projectId": "yMgs3MKB",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "badoptimizations",
+    "name": "BadOptimizations",
+    "version": "latest",
+    "required": false,
+    "category": "performance",
+    "description": "Optimizes non-rendering systems: GUI, sound, and misc hot code paths",
+    "source": "modrinth",
+    "projectId": "JiVaRFfj",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "particle-core",
+    "name": "Particle Core",
+    "version": "latest",
+    "required": false,
+    "category": "performance",
+    "description": "Particle culling, rendering optimization, per-type spawn reduction",
+    "source": "modrinth",
+    "projectId": "CWzzSoM2",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "c2me",
+    "name": "C2ME (Concurrent Chunk Management Engine)",
+    "version": "latest",
+    "required": false,
+    "category": "performance",
+    "description": "Multi-threaded chunk generation and loading for major world-gen speedups",
+    "source": "modrinth",
+    "projectId": "VSNURg3q",
+    "dependencies": [],
+    "env": {
+      "client": "optional",
+      "server": "required"
+    }
+  },
+  {
+    "id": "scalablelux",
+    "name": "ScalableLux",
+    "version": "latest",
+    "required": false,
+    "category": "performance",
+    "description": "High-performance lighting engine replacement (successor to Starlight)",
+    "source": "modrinth",
+    "projectId": "TLGxoVnq",
+    "dependencies": [],
+    "env": {
+      "client": "optional",
+      "server": "required"
+    }
+  },
+  {
+    "id": "copper-hopper",
+    "name": "Copper Hopper",
+    "version": "latest",
+    "required": false,
+    "category": "redstone",
+    "description": "Hopper that acts as a simple item filter",
+    "source": "modrinth",
+    "projectId": "lYpHN5hB",
+    "dependencies": [
+      "fabric-api"
+    ],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "tc-wireless-redstone",
+    "name": "TC Wireless Redstone",
+    "version": "latest",
+    "required": false,
+    "category": "redstone",
+    "description": "Transmit redstone signals wirelessly between transmitter and receiver",
+    "source": "modrinth",
+    "projectId": "uMmeOjBd",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "antishadowpatch",
+    "name": "AntiShadowPatch",
+    "version": "latest",
+    "required": false,
+    "category": "redstone",
+    "description": "Brings back technical bugs/mechanics Mojang patched (duplication etc.)",
+    "source": "modrinth",
+    "projectId": "Gz2EBJmV",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "omnihopper",
+    "name": "Omni-Hopper",
+    "version": "latest",
+    "required": false,
+    "category": "redstone",
+    "description": "Break free from normal hopper constraints; true item transport freedom",
+    "source": "modrinth",
+    "projectId": "yWp3YZnJ",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "force-close-world-loading-screen",
+    "name": "Force Close World Loading Screen",
+    "version": "latest",
+    "required": false,
+    "category": "performance",
+    "description": "Instantly closes loading terrain screen, speeds up resource pack loading",
+    "source": "modrinth",
+    "projectId": "bl5MIp9o",
+    "dependencies": [
+      "modmenu"
+    ],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "polytone",
+    "name": "Polytone",
+    "version": "latest",
+    "required": false,
+    "category": "visual",
+    "description": "Customize map colors, block colors, colormaps, sounds, biome colors, colored lights",
+    "source": "modrinth",
+    "projectId": "V4OVfl2P",
+    "dependencies": [
+      "fabric-api"
+    ],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  }
+  ,
+  {
+    "id": "carpet-tis-addition",
+    "name": "Carpet TIS Addition",
+    "version": "latest",
+    "required": false,
+    "category": "redstone",
+    "description": "Major Carpet extension: anti-cheat, technical features, game rules",
+    "source": "modrinth",
+    "projectId": "jE0S5YcZ",
+    "dependencies": [
+      "carpet"
+    ],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "carpet-extra",
+    "name": "Carpet Extra",
+    "version": "latest",
+    "required": false,
+    "category": "redstone",
+    "description": "Additional dispenser behaviors, renewable resources via Carpet",
+    "source": "modrinth",
+    "projectId": "G5Q1MkZy",
+    "dependencies": [
+      "carpet"
+    ],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "carpet-org-addition",
+    "name": "Carpet Org Addition",
+    "version": "latest",
+    "required": false,
+    "category": "redstone",
+    "description": "Expansion mod for Carpet with extra rules and features",
+    "source": "modrinth",
+    "projectId": "kzsyf4pE",
+    "dependencies": [
+      "carpet"
+    ],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "syncmatica",
+    "name": "Syncmatica",
+    "version": "latest",
+    "required": false,
+    "category": "building",
+    "description": "Share Litematica schematics and placements with other players",
+    "source": "modrinth",
+    "projectId": "bfneeBkY",
+    "dependencies": [
+      "carpet",
+      "malilib",
+      "litematica"
+    ],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "inventory-profiles-next",
+    "name": "Inventory Profiles Next",
+    "version": "latest",
+    "required": false,
+    "category": "ui",
+    "description": "Full inventory control: sort, move matching, locked slots, gear sets",
+    "source": "modrinth",
+    "projectId": "O7RBQmYr",
+    "dependencies": [
+      "libipn",
+      "fabric-language-kotlin",
+      "modmenu"
+    ],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "chat-animation",
+    "name": "Chat Animation",
+    "version": "latest",
+    "required": false,
+    "category": "ui",
+    "description": "Smooth slide-in animation for chat messages",
+    "source": "modrinth",
+    "projectId": "wqFxtBKA",
+    "dependencies": [
+      "fabric-api"
+    ],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "durability-tooltip",
+    "name": "Durability Tooltip",
+    "version": "latest",
+    "required": false,
+    "category": "ui",
+    "description": "Shows item durability in tooltip",
+    "source": "modrinth",
+    "projectId": "8WGn4jMh",
+    "dependencies": [
+      "fabric-api"
+    ],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "easy-shulker-boxes",
+    "name": "Easy Shulker Boxes",
+    "version": "latest",
+    "required": false,
+    "category": "ui",
+    "description": "Browse/insert/extract shulker contents directly from inventory",
+    "source": "modrinth",
+    "projectId": "tq5RiXlG",
+    "dependencies": [
+      "puzzles-lib",
+      "fabric-api"
+    ],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "moremousetweaks",
+    "name": "More Mouse Tweaks",
+    "version": "latest",
+    "required": false,
+    "category": "ui",
+    "description": "Complements Mouse Tweaks with scroll-wheel features",
+    "source": "modrinth",
+    "projectId": "DhTnHdGK",
+    "dependencies": [
+      "mouse-tweaks",
+      "cloth-config"
+    ],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "technical-utilities",
+    "name": "Technical Utilities",
+    "version": "latest",
+    "required": false,
+    "category": "redstone",
+    "description": "Client-side tweaks for Litematica, WorldEdit, and other small utilities",
+    "source": "modrinth",
+    "projectId": "t6IhNIri",
+    "dependencies": [
+      "fabric-api",
+      "malilib",
+      "litematica"
+    ],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "worldedit",
+    "name": "WorldEdit",
+    "version": "latest",
+    "required": false,
+    "category": "building",
+    "description": "In-game map editor; essential for redstone building",
+    "source": "modrinth",
+    "projectId": "1u6Jk5MM",
+    "dependencies": [
+      "fabric-api"
+    ],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "libipn",
+    "name": "libIPN",
+    "version": "latest",
+    "required": false,
+    "category": "library",
+    "description": "Library dependency for Inventory Profiles Next",
+    "source": "modrinth",
+    "projectId": "nlVpxKqs",
+    "dependencies": [],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "puzzles-lib",
+    "name": "Puzzles Lib",
+    "version": "latest",
+    "required": false,
+    "category": "library",
+    "description": "Shared library for Puzzles by CeoFrodo mods",
+    "source": "modrinth",
+    "projectId": "QAGBm7bp",
+    "dependencies": [
+      "fabric-api"
+    ],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  }
+  ,
+  {
+    "id": "qualia-carpet-addition",
+    "name": "Qualia Carpet Addition (QCA)",
+    "version": "latest",
+    "required": false,
+    "category": "redstone",
+    "description": "Redstone/survival-oriented Carpet addition: hopper limits, beacon range, flower bonemealing, items through chains",
+    "source": "modrinth",
+    "projectId": "qH8fR5jN",
+    "dependencies": [
+      "carpet"
+    ],
+    "env": {
+      "client": "required",
+      "server": "required"
+    }
+  },
+  {
+    "id": "shulker-box-labels",
+    "name": "Shulker Box Labels",
+    "version": "latest",
+    "required": false,
+    "category": "ui",
+    "description": "Add item labels to shulker boxes via anvil with 3D/flat display modes",
+    "source": "modrinth",
+    "projectId": "m8r2bKxP",
+    "dependencies": [
+      "fabric-api"
+    ],
+    "env": {
+      "client": "required",
+      "server": "optional"
+    }
+  },
+  {
+    "id": "c2me-opencl",
+    "name": "C2ME OpenCL Acceleration Module",
+    "version": "latest",
+    "required": false,
+    "category": "performance",
+    "description": "Experimental GPU-accelerated world generation via OpenCL for C2ME",
+    "source": "modrinth",
+    "projectId": "pQ3kV7wT",
+    "dependencies": [
+      "c2me"
+    ],
+    "env": {
+      "client": "optional",
+      "server": "required"
     }
   }
 ];
