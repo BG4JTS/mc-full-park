@@ -21,6 +21,7 @@ export const TAB_LABELS: Record<string, string> = {
   config: 'TOML 配置',
   search: 'Modrinth 搜索',
   graph: '依赖关系图',
+  issues: '问题追踪',
 };
 
 export const UI = {
