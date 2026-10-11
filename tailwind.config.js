@@ -5,12 +5,20 @@ export default {
     extend: {
       colors: {
         mc: {
-          green: '#5B8731',
-          dark: '#1a1a2e',
-          darker: '#16213e',
-          accent: '#0f3460',
-          highlight: '#e94560',
+          green: '#10b981',
+          'green-dim': '#059669',
+          dark: '#09090b',
+          darker: '#060608',
+          card: '#111113',
+          accent: '#10b981',
+          highlight: '#f43f5e',
+          border: '#1e1e22',
+          'border-light': '#27272a',
         },
+      },
+      fontFamily: {
+        sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],
       },
     },
   },

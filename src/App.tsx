@@ -12,6 +12,13 @@ import DependencyGraph from './components/DependencyGraph';
 
 type Tab = 'selector' | 'config' | 'search' | 'graph';
 
+const TAB_ICONS: Record<Tab, string> = {
+  selector: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+  config: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+  search: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+  graph: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1',
+};
+
 export default function App() {
   const [mods, setMods] = useState<McParkMod[]>(PACK_MODS);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(PACK_MODS.filter(m => m.required).map(m => m.id)));
@@ -250,59 +257,80 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-mc-dark">
-      <header className="bg-gradient-to-r from-mc-darker via-mc-darker to-mc-accent/30 border-b border-white/8 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">{UI.appTitle}</h1>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Minecraft {mcVersion} · {loader} · {UI.appSubtitle}
-            </p>
+      <header className="sticky top-0 z-50 border-b border-mc-border bg-mc-dark/80 backdrop-blur-xl">
+        <div className="max-w-[1400px] mx-auto px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-mc-green/15 flex items-center justify-center">
+              <svg className="w-4 h-4 text-mc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-white tracking-tight">{UI.appTitle}</h1>
+              <p className="text-[11px] text-zinc-500">
+                {mcVersion} · {loader}
+              </p>
+            </div>
           </div>
-          <div className="flex gap-1.5 flex-wrap items-center">
+
+          <div className="flex items-center gap-2">
             <input ref={fileInputRef} type="file" accept=".mcpark,.mrpack,.zip" onChange={handleImport} className="hidden" />
             <input ref={csvInputRef} type="file" accept=".csv" onChange={handleCsvImport} className="hidden" />
-            <button onClick={() => fileInputRef.current?.click()} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-md text-xs text-gray-300 transition-all">{UI.importMcpark}</button>
-            <button onClick={() => csvInputRef.current?.click()} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-md text-xs text-gray-300 transition-all">{UI.importCsv}</button>
-            <button onClick={() => downloadCsv(mods)} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-md text-xs text-gray-300 transition-all">{UI.exportCsv}</button>
-            <div className="w-px h-5 bg-white/10 mx-1" />
-            <button onClick={handleExport} className="px-3 py-1.5 bg-mc-green/90 hover:bg-mc-green rounded-md text-xs font-medium text-white transition-all">{'.mcpark'}</button>
-            <button onClick={exportMrpack} className="px-3 py-1.5 bg-emerald-600/90 hover:bg-emerald-600 rounded-md text-xs text-white transition-all">{'.mrpack'}</button>
-            <button onClick={exportCurseForge} className="px-3 py-1.5 bg-orange-600/90 hover:bg-orange-600 rounded-md text-xs text-white transition-all">CurseForge</button>
-            <button onClick={exportToml} className="px-3 py-1.5 bg-indigo-600/90 hover:bg-indigo-600 rounded-md text-xs text-white transition-all">config.toml</button>
+            <div className="flex items-center gap-1 pr-3 mr-1 border-r border-mc-border">
+              <button onClick={() => fileInputRef.current?.click()} className="px-2.5 py-1.5 rounded-md text-xs text-zinc-400 hover:text-white hover:bg-white/5 transition-all">{UI.importMcpark}</button>
+              <button onClick={() => csvInputRef.current?.click()} className="px-2.5 py-1.5 rounded-md text-xs text-zinc-400 hover:text-white hover:bg-white/5 transition-all">{UI.importCsv}</button>
+              <button onClick={() => downloadCsv(mods)} className="px-2.5 py-1.5 rounded-md text-xs text-zinc-400 hover:text-white hover:bg-white/5 transition-all">{UI.exportCsv}</button>
+            </div>
+            <div className="flex items-center gap-1">
+              <button onClick={handleExport} className="px-2.5 py-1.5 rounded-md text-xs font-medium text-mc-dark bg-mc-green hover:bg-mc-green/90 transition-all">.mcpark</button>
+              <button onClick={exportMrpack} className="px-2.5 py-1.5 rounded-md text-xs font-medium text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/20 transition-all">.mrpack</button>
+              <button onClick={exportCurseForge} className="px-2.5 py-1.5 rounded-md text-xs font-medium text-orange-300 bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/20 transition-all">CF</button>
+              <button onClick={exportToml} className="px-2.5 py-1.5 rounded-md text-xs font-medium text-indigo-300 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/20 transition-all">TOML</button>
+            </div>
           </div>
         </div>
       </header>
 
       {statusMsg && (
-        <div className="bg-mc-green/15 border-b border-mc-green/20 px-6 py-2 text-sm flex items-center justify-center gap-4">
-          <span className="text-mc-green">{statusMsg}</span>
-          <button onClick={() => setStatusMsg('')} className="text-gray-500 hover:text-white text-xs transition-colors">{UI.close}</button>
+        <div className="bg-mc-green/8 border-b border-mc-green/15 px-8 py-2.5 flex items-center justify-center gap-3">
+          <svg className="w-3.5 h-3.5 text-mc-green shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-sm text-mc-green/90">{statusMsg}</span>
+          <button onClick={() => setStatusMsg('')} className="ml-2 text-zinc-600 hover:text-zinc-400 transition-colors">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <nav className="flex gap-0.5 mb-5 border-b border-white/8">
+      <div className="max-w-[1400px] mx-auto px-8 py-6">
+        <nav className="flex gap-1 mb-8">
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-4 py-2.5 text-sm font-medium transition-all border-b-2 rounded-t-md ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 tab === t.key
-                  ? 'border-mc-green text-white bg-white/3'
-                  : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-white/3'
+                  ? 'bg-white/8 text-white shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/3'
               }`}
             >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d={TAB_ICONS[t.key]} />
+              </svg>
               {t.label}
             </button>
           ))}
         </nav>
 
         {tab === 'selector' && (
-          <div className="flex gap-6">
+          <div className="flex gap-8">
             <div className="flex-1 min-w-0">
-              <div className="flex gap-3 mb-4">
+              <div className="flex gap-3 mb-6">
                 <div className="relative flex-1">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
@@ -310,13 +338,13 @@ export default function App() {
                     placeholder={UI.searchPlaceholder}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="w-full bg-mc-darker/80 border border-white/8 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-mc-green/50 focus:ring-1 focus:ring-mc-green/20 transition-all"
+                    className="w-full bg-mc-card border border-mc-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-mc-green/40 focus:ring-1 focus:ring-mc-green/10 transition-all"
                   />
                 </div>
                 <select
                   value={category || ''}
                   onChange={e => setCategory(e.target.value || null)}
-                  className="bg-mc-darker/80 border border-white/8 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-mc-green/50 transition-all min-w-[120px]"
+                  className="bg-mc-card border border-mc-border rounded-lg px-3 py-2.5 text-sm text-zinc-300 focus:outline-none focus:border-mc-green/40 transition-all min-w-[130px] appearance-none cursor-pointer"
                 >
                   <option value="">{UI.allCategories}</option>
                   {categories.map(c => (
@@ -332,61 +360,56 @@ export default function App() {
                     onShowGraph={() => { setSelectedModForGraph(mod.id); setTab('graph'); }} />
                 ))}
                 {filtered.length === 0 && (
-                  <p className="text-gray-500 text-center py-12 text-sm">{UI.noMods}</p>
+                  <div className="text-center py-16">
+                    <svg className="w-10 h-10 mx-auto text-zinc-700 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    <p className="text-zinc-600 text-sm">{UI.noMods}</p>
+                  </div>
                 )}
               </div>
               {filtered.length > 0 && (
-                <p className="text-xs text-gray-600 text-center mt-4">
+                <p className="text-xs text-zinc-700 text-center mt-6 tabular-nums">
                   {filtered.length} / {mods.length}
                 </p>
               )}
             </div>
-            <aside className="w-60 shrink-0">
-              <div className="bg-mc-darker/60 rounded-xl border border-white/8 p-4 sticky top-6 space-y-4">
-                <h2 className="text-sm font-bold text-white">{UI.summary}</h2>
+
+            <aside className="w-56 shrink-0">
+              <div className="sticky top-24 space-y-4">
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-mc-green/10 rounded-lg p-2.5 text-center">
-                    <p className="text-lg font-bold text-mc-green">{selectedIds.size}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{UI.selected}</p>
-                  </div>
-                  <div className="bg-white/5 rounded-lg p-2.5 text-center">
-                    <p className="text-lg font-bold text-white">{resolved.length}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{UI.withDeps}</p>
-                  </div>
-                  <div className={`rounded-lg p-2.5 text-center ${missing.length ? 'bg-red-500/10' : 'bg-white/5'}`}>
-                    <p className={`text-lg font-bold ${missing.length ? 'text-red-400' : 'text-gray-500'}`}>{missing.length}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{UI.missing}</p>
-                  </div>
+                  <StatCard value={selectedIds.size} label={UI.selected} accent />
+                  <StatCard value={resolved.length} label={UI.withDeps} />
+                  <StatCard value={missing.length} label={UI.missing} danger={missing.length > 0} />
                   {circular.length > 0 && (
-                    <div className="bg-yellow-500/10 rounded-lg p-2.5 text-center">
-                      <p className="text-lg font-bold text-yellow-400">{circular.length}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">{UI.circular}</p>
-                    </div>
+                    <StatCard value={circular.length} label={UI.circular} warn />
                   )}
                 </div>
+
                 {missing.length > 0 && (
-                  <div className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
-                    <p className="text-red-400 font-medium text-xs mb-1.5">{UI.missingLabel}</p>
-                    {missing.map(id => <p key={id} className="text-red-300/80 text-xs font-mono truncate">{id}</p>)}
+                  <div className="bg-red-500/8 border border-red-500/15 rounded-xl p-3">
+                    <p className="text-red-400 font-medium text-xs mb-2">{UI.missingLabel}</p>
+                    {missing.map(id => <p key={id} className="text-red-300/70 text-xs font-mono truncate">{id}</p>)}
                   </div>
                 )}
-                <div className="pt-3 border-t border-white/8">
-                  <h3 className="text-xs font-semibold text-gray-400 mb-2">{UI.categories}</h3>
+
+                <div>
+                  <h3 className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wider mb-2.5">{UI.categories}</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {categories.map(c => {
                       const count = resolved.filter(m => m.category === c).length;
                       return (
                         <button
                           key={c}
-                          onClick={() => { setCategory(category === c ? null : c); }}
-                          className={`px-2 py-0.5 rounded-md text-[11px] transition-all ${
+                          onClick={() => setCategory(category === c ? null : c)}
+                          className={`px-2 py-1 rounded-md text-[11px] transition-all ${
                             category === c
-                              ? 'bg-mc-green/20 text-mc-green border border-mc-green/30'
-                              : 'bg-white/5 text-gray-400 hover:bg-white/8 border border-transparent'
+                              ? 'bg-mc-green/15 text-mc-green border border-mc-green/25'
+                              : 'bg-white/3 text-zinc-500 hover:bg-white/6 border border-transparent'
                           }`}
                         >
                           {CATEGORY_LABELS[c] || c}
-                          <span className="ml-1 opacity-60">{count}</span>
+                          <span className="ml-1 text-zinc-600">{count}</span>
                         </button>
                       );
                     })}
@@ -398,66 +421,58 @@ export default function App() {
         )}
 
         {tab === 'config' && (
-          <div className="flex gap-4 h-[calc(100vh-220px)]">
+          <div className="flex gap-6 h-[calc(100vh-220px)]">
             <div className="flex-1 flex flex-col">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-bold text-white">{UI.tomlEditor}</h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-white">{UI.tomlEditor}</h2>
                 <div className="flex gap-2">
-                  <button onClick={syncConfigToMods} className="px-3 py-1.5 bg-mc-green/80 hover:bg-mc-green rounded-md text-xs font-medium transition-all">{UI.applyToMods}</button>
-                  <button onClick={syncModsToConfig} className="px-3 py-1.5 bg-white/8 hover:bg-white/12 border border-white/10 rounded-md text-xs text-gray-300 transition-all">{UI.syncFromSelection}</button>
+                  <button onClick={syncConfigToMods} className="px-3 py-1.5 bg-mc-green hover:bg-mc-green/90 rounded-lg text-xs font-medium text-mc-dark transition-all">{UI.applyToMods}</button>
+                  <button onClick={syncModsToConfig} className="px-3 py-1.5 bg-white/5 hover:bg-white/8 border border-mc-border rounded-lg text-xs text-zinc-400 hover:text-white transition-all">{UI.syncFromSelection}</button>
                 </div>
               </div>
               <textarea
                 value={tomlText}
                 onChange={e => setTomlText(e.target.value)}
-                className="flex-1 bg-mc-darker/80 border border-white/8 rounded-lg p-4 font-mono text-xs text-gray-300 focus:outline-none focus:border-mc-green/50 focus:ring-1 focus:ring-mc-green/20 resize-none transition-all"
+                className="flex-1 bg-mc-card border border-mc-border rounded-xl p-5 font-mono text-xs text-zinc-300 focus:outline-none focus:border-mc-green/40 focus:ring-1 focus:ring-mc-green/10 resize-none transition-all leading-relaxed"
                 spellCheck={false}
               />
             </div>
             <div className="w-80 flex flex-col">
-              <h2 className="text-sm font-bold text-white mb-2">{UI.configPreview}</h2>
-              <div className="flex-1 bg-mc-darker/60 border border-white/8 rounded-lg p-4 overflow-auto text-xs space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">{UI.nameLabel}</span>
-                  <span className="text-white font-medium">{config.metadata.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">{UI.mcLabel}</span>
-                  <span className="text-white font-mono">{config.minecraft.version.join(', ')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">{UI.loaderLabel}</span>
-                  <span className="text-white">{config.minecraft.mod_loader.join(', ')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">{UI.modsLabel}</span>
-                  <span className="text-mc-green font-bold">{config.mods.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">{UI.outputLabel}</span>
-                  <span className="text-white">{config.output.format.join(', ')}</span>
-                </div>
+              <h2 className="text-sm font-semibold text-white mb-3">{UI.configPreview}</h2>
+              <div className="flex-1 bg-mc-card border border-mc-border rounded-xl p-5 overflow-auto text-xs space-y-3.5">
+                {[
+                  [UI.nameLabel, config.metadata.name, 'text-white'],
+                  [UI.mcLabel, config.minecraft.version.join(', '), 'text-white font-mono'],
+                  [UI.loaderLabel, config.minecraft.mod_loader.join(', '), 'text-white'],
+                  [UI.modsLabel, String(config.mods.length), 'text-mc-green font-bold'],
+                  [UI.outputLabel, config.output.format.join(', '), 'text-white'],
+                ].map(([label, value, cls]) => (
+                  <div key={label} className="flex justify-between items-center">
+                    <span className="text-zinc-600">{label}</span>
+                    <span className={cls}>{value}</span>
+                  </div>
+                ))}
                 {config.features.length > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">{UI.featuresLabel}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-600">{UI.featuresLabel}</span>
                     <span className="text-white">{config.features.join(', ')}</span>
                   </div>
                 )}
-                <div className="pt-3 border-t border-white/8">
-                  <p className="text-gray-500 mb-2 font-medium">{UI.modEntries}</p>
+                <div className="pt-4 border-t border-mc-border">
+                  <p className="text-zinc-600 mb-3 font-medium">{UI.modEntries}</p>
                   {config.mods.slice(0, 20).map((m, i) => {
                     const entry = typeof m === 'string' ? { id: m } : m;
                     return (
-                      <div key={i} className="text-gray-400 pl-2 border-l-2 border-white/5 mb-1.5 hover:border-mc-green/30 transition-colors">
+                      <div key={i} className="text-zinc-500 pl-3 border-l border-mc-border-light mb-2 hover:border-mc-green/30 transition-colors">
                         <span className="font-mono">{entry.id}</span>
-                        {entry.only_version && <span className="text-yellow-400/80 ml-1 text-[10px]">[v:{entry.only_version.join(',')}]</span>}
-                        {entry.only_loader && <span className="text-blue-400/80 ml-1 text-[10px]">[l:{entry.only_loader.join(',')}]</span>}
-                        {entry.feature && <span className="text-green-400/80 ml-1 text-[10px]">[f:{entry.feature}]</span>}
+                        {entry.only_version && <span className="text-yellow-400/60 ml-1.5 text-[10px]">v:{entry.only_version.join(',')}</span>}
+                        {entry.only_loader && <span className="text-blue-400/60 ml-1.5 text-[10px]">l:{entry.only_loader.join(',')}</span>}
+                        {entry.feature && <span className="text-mc-green/60 ml-1.5 text-[10px]">f:{entry.feature}</span>}
                       </div>
                     );
                   })}
                   {config.mods.length > 20 && (
-                    <p className="text-gray-600 pl-2 text-[10px]">{UI.andMore.replace('{count}', String(config.mods.length - 20))}</p>
+                    <p className="text-zinc-700 pl-3 text-[10px]">{UI.andMore.replace('{count}', String(config.mods.length - 20))}</p>
                   )}
                 </div>
               </div>
@@ -466,10 +481,10 @@ export default function App() {
         )}
 
         {tab === 'search' && (
-          <div>
-            <div className="mb-4">
+          <div className="max-w-3xl">
+            <div className="mb-6">
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
@@ -477,35 +492,40 @@ export default function App() {
                   placeholder={UI.modrinthSearchPlaceholder}
                   value={modrinthQuery}
                   onChange={e => setModrinthQuery(e.target.value)}
-                  className="w-full bg-mc-darker/80 border border-white/8 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-mc-green/50 focus:ring-1 focus:ring-mc-green/20 transition-all"
+                  className="w-full bg-mc-card border border-mc-border rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-mc-green/40 focus:ring-1 focus:ring-mc-green/10 transition-all"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1.5">
+              <p className="text-xs text-zinc-600 mt-2">
                 {UI.searchingFor.replace('{version}', mcVersion).replace('{loader}', loader)}
               </p>
             </div>
-            {searching && <p className="text-gray-400 text-sm">{UI.searching}</p>}
+            {searching && (
+              <div className="flex items-center gap-2 text-zinc-500 text-sm py-4">
+                <div className="w-4 h-4 border-2 border-zinc-600 border-t-mc-green rounded-full animate-spin" />
+                {UI.searching}
+              </div>
+            )}
             <div className="grid gap-2">
               {modrinthResults.map(project => (
-                <div key={project.id} className="bg-mc-darker/60 border border-white/8 rounded-lg p-4 flex items-start justify-between gap-3 hover:border-white/15 transition-all group">
-                  <div className="flex items-start gap-3 min-w-0">
+                <div key={project.id} className="bg-mc-card border border-mc-border rounded-xl p-4 flex items-start justify-between gap-4 hover:border-mc-border-light transition-all group">
+                  <div className="flex items-start gap-3.5 min-w-0">
                     {project.icon_url && (
-                      <img src={project.icon_url} alt="" className="w-10 h-10 rounded-md shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      <img src={project.icon_url} alt="" className="w-10 h-10 rounded-lg shrink-0 bg-white/5" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     )}
                     <div className="min-w-0">
                       <h3 className="font-semibold text-white text-sm truncate">{project.title}</h3>
-                      <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{project.description}</p>
-                      <div className="flex gap-2 mt-1.5 items-center flex-wrap">
+                      <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2 leading-relaxed">{project.description}</p>
+                      <div className="flex gap-2 mt-2 items-center flex-wrap">
                         {project.categories.slice(0, 4).map(c => (
-                          <span key={c} className="px-1.5 py-0.5 bg-white/5 rounded text-[10px] text-gray-400">{c}</span>
+                          <span key={c} className="px-1.5 py-0.5 bg-white/4 rounded text-[10px] text-zinc-500">{c}</span>
                         ))}
-                        <span className="text-[10px] text-gray-500">{project.downloads.toLocaleString()} {UI.downloads}</span>
+                        <span className="text-[10px] text-zinc-600 tabular-nums">{project.downloads.toLocaleString()} {UI.downloads}</span>
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={() => addFromModrinth(project)}
-                    className="shrink-0 px-3 py-1.5 bg-mc-green/80 hover:bg-mc-green rounded-md text-xs font-medium transition-all opacity-80 group-hover:opacity-100"
+                    className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-mc-green/10 text-mc-green border border-mc-green/20 hover:bg-mc-green/20 transition-all opacity-0 group-hover:opacity-100"
                   >
                     {UI.add}
                   </button>
@@ -519,6 +539,19 @@ export default function App() {
           <DependencyGraph mods={mods} selectedModId={selectedModForGraph} onSelectMod={setSelectedModForGraph} resolvedIds={resolvedIds} />
         )}
       </div>
+    </div>
+  );
+}
+
+function StatCard({ value, label, accent, danger, warn }: {
+  value: number; label: string; accent?: boolean; danger?: boolean; warn?: boolean;
+}) {
+  const colorClass = danger ? 'text-red-400' : warn ? 'text-yellow-400' : accent ? 'text-mc-green' : 'text-white';
+  const bgClass = danger ? 'bg-red-500/8 border-red-500/15' : warn ? 'bg-yellow-500/8 border-yellow-500/15' : accent ? 'bg-mc-green/8 border-mc-green/15' : 'bg-mc-card border-mc-border';
+  return (
+    <div className={`rounded-xl border p-3 text-center ${bgClass}`}>
+      <p className={`text-xl font-bold tabular-nums ${colorClass}`}>{value}</p>
+      <p className="text-[10px] text-zinc-600 mt-0.5">{label}</p>
     </div>
   );
 }
