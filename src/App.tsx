@@ -7,14 +7,17 @@ import { csvToMods, downloadCsv } from './utils/csv-utils';
 import { DEFAULT_CONFIG, configToToml, parseTomlConfig, evaluateCond, type PackConfig, type ModEntry } from './utils/config-parser';
 import { PACK_MODS } from './data/mods';
 import { CATEGORY_LABELS, TAB_LABELS, UI } from './i18n';
+import { SITE_CONFIG } from './site-config';
 import ModCard from './components/ModCard';
 import DependencyGraph from './components/DependencyGraph';
 import StarMap from './components/StarMap';
+import HealthReport from './components/HealthReport';
 
-type Tab = 'selector' | 'config' | 'search' | 'graph';
+type Tab = 'selector' | 'resources' | 'config' | 'search' | 'graph';
 
 const TAB_ICONS: Record<Tab, string> = {
   selector: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+  resources: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
   config: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
   search: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
   graph: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1',
@@ -33,14 +36,15 @@ export default function App() {
   const [modrinthResults, setModrinthResults] = useState<ModrinthProject[]>([]);
   const [modrinthQuery, setModrinthQuery] = useState('');
   const [searching, setSearching] = useState(false);
-  const [mcVersion, setMcVersion] = useState('26.1.2');
-  const [loader, setLoader] = useState('fabric');
+  const [mcVersion, setMcVersion] = useState(SITE_CONFIG.defaultMcVersion);
+  const [loader, setLoader] = useState(SITE_CONFIG.defaultLoader);
   const [filterVersion, setFilterVersion] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
 
   const categories = getCategories(mods);
-  const filtered = filterMods(mods, search, category);
+  const filtered = filterMods(mods, search, category).filter(m => m.category !== 'resourcepack' && m.category !== 'shaderpack');
+  const resourceMods = mods.filter(m => m.category === 'resourcepack' || m.category === 'shaderpack');
   const { resolved, missing, circular } = resolveDependencies(selectedIds, mods);
   const resolvedIds = new Set(resolved.map(m => m.id));
 
@@ -269,6 +273,7 @@ export default function App() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'selector', label: TAB_LABELS.selector },
+    { key: 'resources', label: TAB_LABELS.resources },
     { key: 'config', label: TAB_LABELS.config },
     { key: 'search', label: TAB_LABELS.search },
     { key: 'graph', label: TAB_LABELS.graph },
@@ -324,6 +329,18 @@ export default function App() {
               <button onClick={exportCurseForge} className="px-2.5 py-1.5 rounded-md text-xs font-medium text-orange-300 bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/20 transition-all">CF</button>
               <button onClick={exportToml} className="px-2.5 py-1.5 rounded-md text-xs font-medium text-indigo-300 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/20 transition-all">TOML</button>
             </div>
+            <div className="w-px h-5 bg-mc-border mx-1" />
+            <a
+              href={`https://github.com/${SITE_CONFIG.repo}/issues/new?labels=${SITE_CONFIG.issueLabels.join(',')}`}
+              target="_blank" rel="noopener noreferrer"
+              className="px-2.5 py-1.5 rounded-md text-xs text-zinc-500 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1.5"
+              title={UI.feedbackHint}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              {UI.feedback}
+            </a>
           </div>
         </div>
       </header>
@@ -442,6 +459,10 @@ export default function App() {
                   </div>
                 )}
 
+                <div className="bg-mc-card border border-mc-border rounded-xl p-3">
+                  <HealthReport mods={mods} selectedIds={selectedIds} resolvedIds={resolvedIds} missing={missing} circular={circular} />
+                </div>
+
                 <div>
                   <h3 className="text-[10px] font-semibold text-zinc-600 uppercase tracking-wider mb-2">{UI.categories}</h3>
                   <div className="flex flex-wrap gap-1">
@@ -466,6 +487,45 @@ export default function App() {
                 </div>
               </div>
             </aside>
+          </div>
+        )}
+
+        {tab === 'resources' && (
+          <div className="max-w-3xl space-y-6">
+            <div>
+              <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-orange-400" />
+                {UI.resourcePacks} ({resourceMods.filter(m => m.category === 'resourcepack').length})
+              </h2>
+              <div className="flex flex-col gap-px">
+                {resourceMods.filter(m => m.category === 'resourcepack').map(mod => (
+                  <ModCard key={mod.id} mod={mod} selected={selectedIds.has(mod.id)}
+                    autoResolved={false}
+                    onToggle={() => toggleMod(mod.id)}
+                    onShowGraph={() => {}} />
+                ))}
+                {resourceMods.filter(m => m.category === 'resourcepack').length === 0 && (
+                  <p className="text-zinc-600 text-xs py-4">{UI.noResources}</p>
+                )}
+              </div>
+            </div>
+            <div className="border-t border-mc-border pt-6">
+              <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-purple-400" />
+                {UI.shaderPacks} ({resourceMods.filter(m => m.category === 'shaderpack').length})
+              </h2>
+              <div className="flex flex-col gap-px">
+                {resourceMods.filter(m => m.category === 'shaderpack').map(mod => (
+                  <ModCard key={mod.id} mod={mod} selected={selectedIds.has(mod.id)}
+                    autoResolved={false}
+                    onToggle={() => toggleMod(mod.id)}
+                    onShowGraph={() => {}} />
+                ))}
+                {resourceMods.filter(m => m.category === 'shaderpack').length === 0 && (
+                  <p className="text-zinc-600 text-xs py-4">{UI.noResources}</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
